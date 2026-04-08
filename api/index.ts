@@ -37,13 +37,25 @@ async function startServer() {
 
   // 1. LOGIN: Usamos el sistema de Auth de Supabase o tabla users
   app.post("/api/login", async (req, res) => {
+  try {
     const { email, password } = req.body;
+    
+    // Intento de conexión a Supabase
     const { data: user, error } = await supabase
-      .from('users') // Asegúrate de tener esta tabla en Supabase
+      .from('users')
       .select('*')
       .eq('email', email)
       .eq('password', password)
       .single();
+
+    if (error) {
+      // Si Supabase responde con error, lo enviamos para ver qué es
+      return res.status(500).json({ 
+        error: "Error de Supabase", 
+        details: error.message,
+        hint: error.hint 
+      });
+    }
 
     if (user) {
       const { password: _, ...userWithoutPassword } = user;
@@ -51,7 +63,14 @@ async function startServer() {
     } else {
       res.status(401).json({ error: "Credenciales inválidas" });
     }
-  });
+  } catch (err: any) {
+    // Si el servidor colapsa por completo
+    res.status(500).json({ 
+      error: "Error crítico del servidor", 
+      message: err.message 
+    });
+  }
+});
 
   // 2. OBTENER SEDES
   app.get("/api/worksites", async (req, res) => {

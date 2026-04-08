@@ -2,13 +2,59 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
-import Database from "better-sqlite3";
+import { createClient } from '@supabase/supabase-js'; // <-- NUEVO
+import dotenv from 'dotenv';
 
+dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database("geoclock.db");
+// REEMPLAZAMOS SQLite por Supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
+async function startServer() {
+  const app = express();
+  app.use(express.json());
+  const PORT = 3000;
+
+  // NUEVA RUTA DE CLOCK (Fichaje) con Validación de 15m
+  app.post("/api/clock", async (req, res) => {
+    const { user_id, worksite_id, type, latitude, longitude, notes } = req.body;
+    
+    // 1. Validar distancia en el servidor usando la función SQL que creamos
+    const { data: estaCerca, error: geoError } = await supabase.rpc('validar_proximidad', {
+      p_lat: latitude,
+      p_lon: longitude,
+      p_sede_id: worksite_id,
+      p_radio_metros: 15 // Tu restricción de 15 metros
+    });
+
+    if (geoError || !estaCerca) {
+      return res.status(403).json({ 
+        error: "Fuera de rango", 
+        message: "Debes estar a menos de 15 metros de la sede para fichar." 
+      });
+    }
+
+    // 2. Insertar el registro si está cerca
+    const { data, error } = await supabase
+      .from('fichajes')
+      .insert([{ 
+        empleado_id: user_id, 
+        sede_id: worksite_id, 
+        tipo: type === 'IN' ? 'entrada' : 'salida',
+        distancia_metros: 0 // Aquí podrías calcular la distancia real si quieres guardarla
+      }])
+      .select();
+
+    if (error) return res.status(400).json(error);
+    res.json({ id: data[0].id });
+  });
+
+  // ... (El resto de las rutas se irán migrando de db.prepare a supabase.from)
 // Initialize Database
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (

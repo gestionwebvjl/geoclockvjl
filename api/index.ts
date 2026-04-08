@@ -1,3 +1,11 @@
+import { createClient } from '@supabase/supabase-js';
+
+// Usamos valores por defecto vacíos para evitar que el servidor explote si no lee las variables
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+// Creamos el cliente FUERA de cualquier función
+const supabase = createClient(supabaseUrl, supabaseKey);
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";

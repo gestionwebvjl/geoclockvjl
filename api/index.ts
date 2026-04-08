@@ -4,7 +4,19 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+// ... (tus imports)
+import { createClient } from '@supabase/supabase-js';
 
+// No dependamos solo de dotenv en producción
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("ERROR: Faltan las variables de entorno de Supabase");
+}
+
+const supabase = createClient(supabaseUrl || '', supabaseKey || '');
+// ... (resto del código)
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);

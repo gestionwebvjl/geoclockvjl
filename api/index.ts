@@ -119,7 +119,6 @@ async function startServer() {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
-
     console.log(`GeoClock operativo en puerto ${PORT} con Supabase 🚀`);
   });
 }

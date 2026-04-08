@@ -6,52 +6,50 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Forzamos la lectura limpia de variables
-const supabaseUrl = process.env.SUPABASE_URL?.trim();
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+// Conexión segura
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
 
-const supabase = createClient(supabaseUrl || '', supabaseKey || '');
-
-app.get("/api/worksites", async (req, res) => {
-  try {
-    // Si la URL es inválida, este fetch fallará con el error que viste
-    const { data, error } = await supabase.from('sedes').select('*');
-    if (error) throw error;
-    res.json(data || []);
-  } catch (err) {
-    res.status(500).json({ 
-      error: "Error de conexión", 
-      detalle: err.message,
-      config_ok: !!supabaseUrl && !!supabaseKey 
-    });
-  }
-});
-
-// ... (mantén tu ruta de login igual)
-
-export default app;
-
-// Ruta de Login
+// Ruta de Login blindada
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const { data: user, error } = await supabase
+    
+    // Buscamos al usuario sin usar .single() que a veces causa colapsos
+    const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('email', email)
-      .eq('password', password)
-      .single();
+      .eq('password', password);
 
-    if (error || !user) {
+    // Si Supabase se queja de algo técnico
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Si la lista de usuarios está vacía (email o pass incorrecto)
+    if (!data || data.length === 0) {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    // Si todo va bien, sacamos al usuario, le quitamos la contraseña y lo enviamos
+    const user = data[0];
+    const { password: _, ...safeUser } = user;
+    res.json(safeUser);
+    
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Solo si el servidor se incendia
+    res.status(500).json({ error: "Error interno", detalle: err.message });
   }
 });
 
-// En modo "module", se usa export default en lugar de module.exports
+// Ruta de prueba
+app.get("/api/worksites", async (req, res) => {
+  const { data, error } = await supabase.from('sedes').select('*');
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data || []);
+});
+
 export default app;

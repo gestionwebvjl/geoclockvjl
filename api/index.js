@@ -1,12 +1,12 @@
-const { createClient } = require('@supabase/supabase-js');
-const express = require('express');
-const cors = require('cors');
+import { createClient } from '@supabase/supabase-js';
+import express from 'express';
+import cors from 'cors';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexión a Supabase
+// Conexión a Supabase (Asegúrate de que estas variables estén en Vercel)
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -45,5 +45,5 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// IMPORTANTE PARA VERCEL
-module.exports = app;
+// En modo "module", se usa export default en lugar de module.exports
+export default app;

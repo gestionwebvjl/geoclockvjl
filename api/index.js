@@ -6,22 +6,30 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexión a Supabase (Asegúrate de que estas variables estén en Vercel)
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Forzamos la lectura limpia de variables
+const supabaseUrl = process.env.SUPABASE_URL?.trim();
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
-// Ruta de prueba
+const supabase = createClient(supabaseUrl || '', supabaseKey || '');
+
 app.get("/api/worksites", async (req, res) => {
   try {
+    // Si la URL es inválida, este fetch fallará con el error que viste
     const { data, error } = await supabase.from('sedes').select('*');
     if (error) throw error;
     res.json(data || []);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      error: "Error de conexión", 
+      detalle: err.message,
+      config_ok: !!supabaseUrl && !!supabaseKey 
+    });
   }
 });
+
+// ... (mantén tu ruta de login igual)
+
+export default app;
 
 // Ruta de Login
 app.post("/api/login", async (req, res) => {

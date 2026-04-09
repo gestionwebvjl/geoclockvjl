@@ -6,69 +6,81 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexión segura
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-// Ruta de Login blindada
+// ==========================================
+// 1. RUTA DE LOGIN
+// ==========================================
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    // Buscamos al usuario sin usar .single() que a veces causa colapsos
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('email', email)
       .eq('password', password);
 
-    // Si Supabase se queja de algo técnico
-    if (error) {
-      return res.status(400).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data || data.length === 0) return res.status(401).json({ error: "Credenciales inválidas" });
 
-    // Si la lista de usuarios está vacía (email o pass incorrecto)
-    if (!data || data.length === 0) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
-    }
-
-    // Si todo va bien, sacamos al usuario, le quitamos la contraseña y lo enviamos
     const user = data[0];
     const { password: _, ...safeUser } = user;
     res.json(safeUser);
-    
   } catch (err) {
-    // Solo si el servidor se incendia
     res.status(500).json({ error: "Error interno", detalle: err.message });
   }
 });
 
-// Ruta de prueba
-app.get("/api/admin/worksites", async (req, res) => {
+// ==========================================
+// 2. RUTAS DE SEDES (WORKSITES)
+// ==========================================
+// Leer sedes (soporta ambas rutas por si acaso)
+app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   const { data, error } = await supabase.from('sedes').select('*');
   if (error) return res.status(400).json({ error: error.message });
   res.json(data || []);
 });
-// Ruta para CREAR una nueva sede (Ajustada para coincidir con React)
+
+// Crear sede
 app.post("/api/admin/worksites", async (req, res) => {
   try {
-    const nuevaSede = req.body;
-    
-    const { data, error } = await supabase
-      .from('sedes')
-      .insert([nuevaSede])
-      .select();
-
-    if (error) {
-      console.error("Error de Supabase al insertar sede:", error.message);
-      return res.status(400).json({ error: error.message });
-    }
-
+    const { data, error } = await supabase.from('sedes').insert([req.body]).select();
+    if (error) throw error; // Esto lanza el error al catch para que lo veamos
     res.status(201).json(data[0]);
   } catch (err) {
-    res.status(500).json({ error: "Error interno del servidor", detalle: err.message });
+    res.status(400).json({ error: err.message, datos_recibidos: req.body });
   }
 });
+
+// ==========================================
+// 3. RUTAS DE USUARIOS (USERS)
+// ==========================================
+// Leer usuarios
+app.get(["/api/users", "/api/admin/users"], async (req, res) => {
+  const { data, error } = await supabase.from('users').select('*');
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data || []);
+});
+
+// Crear usuario
+app.post("/api/admin/users", async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('users').insert([req.body]).select();
+    if (error) throw error;
+    res.status(201).json(data[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message, datos_recibidos: req.body });
+  }
+});
+
+// ==========================================
+// 4. CHIVATO DE RUTAS NO ENCONTRADAS
+// ==========================================
+app.use((req, res) => {
+  res.status(404).json({ error: `Falta programar esta ruta: ${req.method} ${req.originalUrl}` });
+});
+
 export default app;

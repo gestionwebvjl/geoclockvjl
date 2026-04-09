@@ -64,14 +64,33 @@ app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   res.json(error ? [] : data);
 });
 
+// ==========================================
+// CREAR SEDE (Con Traductor Automático)
+// ==========================================
 app.post(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
-  const { data, error } = await supabase.from('sedes').insert([req.body]).select();
-  // AQUÍ ESTÁ LA LUPA PARA VER POR QUÉ FALLAN LAS SEDES
-  if (error) {
-    console.log("❌ ERROR SUPABASE EN SEDES:", error.message);
-    return res.status(400).json({ error: error.message, intento: req.body });
+  try {
+    // TRADUCTOR: El frontend nos manda inglés, nosotros lo pasamos al español que espera Supabase
+    const sedeTraducida = {
+      nombre: req.body.name,
+      latitud: req.body.latitude,
+      longitud: req.body.longitude
+      // Nota: Omitimos 'address' y 'radius' intencionadamente para que Supabase no dé error si no existen esas columnas
+    };
+
+    const { data, error } = await supabase
+      .from('sedes')
+      .insert([sedeTraducida])
+      .select();
+
+    if (error) {
+      console.log("❌ ERROR SUPABASE:", error.message);
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.status(201).json(data[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  res.status(201).json(data[0]);
 });
 
 app.put(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) => {

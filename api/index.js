@@ -51,12 +51,11 @@ app.get("/api/worksites", async (req, res) => {
   if (error) return res.status(400).json({ error: error.message });
   res.json(data || []);
 });
-// Ruta para CREAR una nueva sede
-app.post("/api/worksites", async (req, res) => {
+// Ruta para CREAR una nueva sede (Ajustada para coincidir con React)
+app.post("/api/admin/worksites", async (req, res) => {
   try {
     const nuevaSede = req.body;
     
-    // Insertamos los datos en la tabla 'sedes' de Supabase
     const { data, error } = await supabase
       .from('sedes')
       .insert([nuevaSede])
@@ -67,7 +66,6 @@ app.post("/api/worksites", async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    // Si todo va bien, devolvemos la sede creada
     res.status(201).json(data[0]);
   } catch (err) {
     res.status(500).json({ error: "Error interno del servidor", detalle: err.message });

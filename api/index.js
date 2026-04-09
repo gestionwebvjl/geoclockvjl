@@ -46,7 +46,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // Ruta de prueba
-app.get("/api/worksites", async (req, res) => {
+app.get("/api/admin/worksites", async (req, res) => {
   const { data, error } = await supabase.from('sedes').select('*');
   if (error) return res.status(400).json({ error: error.message });
   res.json(data || []);

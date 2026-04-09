@@ -77,9 +77,17 @@ app.post("/api/admin/users", async (req, res) => {
 });
 
 // ==========================================
-// 4. CHIVATO DE RUTAS NO ENCONTRADAS
+// 4. SALVAVIDAS (Evita que React se quede en blanco)
 // ==========================================
 app.use((req, res) => {
+  console.log(`[AVISO] La web intentó acceder a: ${req.method} ${req.originalUrl}`);
+  
+  // Si la web pide datos (GET) que no existen, devolvemos una lista vacía para que no se rompan los gráficos
+  if (req.method === 'GET') {
+    return res.json([]);
+  }
+  
+  // Si intenta guardar algo (POST/PUT), sí mostramos el error
   res.status(404).json({ error: `Falta programar esta ruta: ${req.method} ${req.originalUrl}` });
 });
 

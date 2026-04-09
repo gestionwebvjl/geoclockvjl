@@ -57,16 +57,28 @@ app.delete(["/api/users/:id", "/api/admin/users/:id"], async (req, res) => {
 });
 
 // ==========================================
-// 3. SEDES (CON TRADUCTOR)
+// 3. SEDES (BILINGÜE: Frontend <-> Supabase)
 // ==========================================
+
+// LEER (Español -> Inglés)
 app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   const { data, error } = await supabase.from('sedes').select('*');
-  res.json(error ? [] : data);
+  if (error || !data) return res.json([]);
+  
+  // Traducimos lo que sale de la base de datos para que la web lo entienda
+  const sedesFormateadas = data.map(sede => ({
+    id: sede.id,
+    name: sede.nombre,
+    latitude: sede.latitud,
+    longitude: sede.longitud,
+    radius: 100 // Dato por defecto para que la web no se queje
+  }));
+  res.json(sedesFormateadas);
 });
 
+// CREAR (Inglés -> Español)
 app.post(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   try {
-    // Convertimos el inglés del frontend al español de la base de datos
     const sedeTraducida = {
       nombre: req.body.name,
       latitud: req.body.latitude,
@@ -74,25 +86,48 @@ app.post(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
     };
 
     const { data, error } = await supabase.from('sedes').insert([sedeTraducida]).select();
-
-    if (error) {
-      // Si falla, mostrará esto. Así sabremos que el código nuevo ESTÁ funcionando.
-      return res.status(400).json({ error: error.message, traductor: "activo_pero_con_error" });
-    }
+    if (error) return res.status(400).json({ error: error.message });
     
-    res.status(201).json(data[0]);
+    // Devolvemos la respuesta en inglés
+    res.status(201).json({
+      id: data[0].id,
+      name: data[0].nombre,
+      latitude: data[0].latitud,
+      longitude: data[0].longitud,
+      radius: 100
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// MODIFICAR (Inglés -> Español)
 app.put(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabase.from('sedes').update(req.body).eq('id', id).select();
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data[0]);
+  try {
+    const { id } = req.params;
+    const sedeTraducida = {
+      nombre: req.body.name,
+      latitud: req.body.latitude,
+      longitud: req.body.longitude
+    };
+
+    const { data, error } = await supabase.from('sedes').update(sedeTraducida).eq('id', id).select();
+    if (error) return res.status(400).json({ error: error.message });
+    
+    // Devolvemos la respuesta en inglés
+    res.json({
+      id: data[0].id,
+      name: data[0].nombre,
+      latitude: data[0].latitud,
+      longitude: data[0].longitud,
+      radius: 100
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// BORRAR (El ID es universal)
 app.delete(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase.from('sedes').delete().eq('id', id);

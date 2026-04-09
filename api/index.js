@@ -57,34 +57,27 @@ app.delete(["/api/users/:id", "/api/admin/users/:id"], async (req, res) => {
 });
 
 // ==========================================
-// 3. SEDES (CRUD Completo)
+// 3. SEDES (CON TRADUCTOR)
 // ==========================================
 app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   const { data, error } = await supabase.from('sedes').select('*');
   res.json(error ? [] : data);
 });
 
-// ==========================================
-// CREAR SEDE (Con Traductor Automático)
-// ==========================================
 app.post(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   try {
-    // TRADUCTOR: El frontend nos manda inglés, nosotros lo pasamos al español que espera Supabase
+    // Convertimos el inglés del frontend al español de la base de datos
     const sedeTraducida = {
       nombre: req.body.name,
       latitud: req.body.latitude,
       longitud: req.body.longitude
-      // Nota: Omitimos 'address' y 'radius' intencionadamente para que Supabase no dé error si no existen esas columnas
     };
 
-    const { data, error } = await supabase
-      .from('sedes')
-      .insert([sedeTraducida])
-      .select();
+    const { data, error } = await supabase.from('sedes').insert([sedeTraducida]).select();
 
     if (error) {
-      console.log("❌ ERROR SUPABASE:", error.message);
-      return res.status(400).json({ error: error.message });
+      // Si falla, mostrará esto. Así sabremos que el código nuevo ESTÁ funcionando.
+      return res.status(400).json({ error: error.message, traductor: "activo_pero_con_error" });
     }
     
     res.status(201).json(data[0]);
@@ -108,7 +101,7 @@ app.delete(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) 
 });
 
 // ==========================================
-// 4. FICHAJES Y ESTADO (Para gráficos)
+// 4. FICHAJES Y ESTADO
 // ==========================================
 app.get("/api/status/:id", (req, res) => res.json({ isWorking: false, lastEntry: null }));
 app.get(["/api/attendance", "/api/admin/attendance"], async (req, res) => {

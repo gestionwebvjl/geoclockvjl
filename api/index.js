@@ -7,112 +7,102 @@ app.use(cors());
 app.use(express.json());
 
 const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  process.env.SUPABASE_URL?.trim() || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || ''
 );
 
 // ==========================================
-// 1. RUTA DE LOGIN
+// 1. LOGIN
 // ==========================================
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password);
-
+    const { data, error } = await supabase.from('users').select('*').eq('email', email).eq('password', password);
     if (error) return res.status(400).json({ error: error.message });
     if (!data || data.length === 0) return res.status(401).json({ error: "Credenciales inválidas" });
-
     const user = data[0];
     const { password: _, ...safeUser } = user;
     res.json(safeUser);
   } catch (err) {
-    res.status(500).json({ error: "Error interno", detalle: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // ==========================================
-// 2. RUTAS DE SEDES (WORKSITES)
+// 2. USUARIOS (CRUD Completo)
 // ==========================================
-// Leer sedes (soporta ambas rutas por si acaso)
-app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
-  const { data, error } = await supabase.from('sedes').select('*');
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data || []);
-});
-
-// Crear sede
-app.post("/api/admin/worksites", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('sedes').insert([req.body]).select();
-    if (error) throw error; // Esto lanza el error al catch para que lo veamos
-    res.status(201).json(data[0]);
-  } catch (err) {
-    res.status(400).json({ error: err.message, datos_recibidos: req.body });
-  }
-});
-
-// ==========================================
-// 3. RUTAS DE USUARIOS (USERS)
-// ==========================================
-// Leer usuarios
 app.get(["/api/users", "/api/admin/users"], async (req, res) => {
   const { data, error } = await supabase.from('users').select('*');
+  res.json(error ? [] : data);
+});
+
+app.post(["/api/users", "/api/admin/users"], async (req, res) => {
+  const { data, error } = await supabase.from('users').insert([req.body]).select();
   if (error) return res.status(400).json({ error: error.message });
-  res.json(data || []);
+  res.status(201).json(data[0]);
 });
 
-// Crear usuario
-app.post("/api/admin/users", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('users').insert([req.body]).select();
-    if (error) throw error;
-    res.status(201).json(data[0]);
-  } catch (err) {
-    res.status(400).json({ error: err.message, datos_recibidos: req.body });
+app.put(["/api/users/:id", "/api/admin/users/:id"], async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase.from('users').update(req.body).eq('id', id).select();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data[0]);
+});
+
+app.delete(["/api/users/:id", "/api/admin/users/:id"], async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('users').delete().eq('id', id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
+});
+
+// ==========================================
+// 3. SEDES (CRUD Completo)
+// ==========================================
+app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
+  const { data, error } = await supabase.from('sedes').select('*');
+  res.json(error ? [] : data);
+});
+
+app.post(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
+  const { data, error } = await supabase.from('sedes').insert([req.body]).select();
+  // AQUÍ ESTÁ LA LUPA PARA VER POR QUÉ FALLAN LAS SEDES
+  if (error) {
+    console.log("❌ ERROR SUPABASE EN SEDES:", error.message);
+    return res.status(400).json({ error: error.message, intento: req.body });
   }
+  res.status(201).json(data[0]);
+});
+
+app.put(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase.from('sedes').update(req.body).eq('id', id).select();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data[0]);
+});
+
+app.delete(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('sedes').delete().eq('id', id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
 });
 
 // ==========================================
-// RUTA DE ESTADO Y FICHAJES (Evita la pantalla blanca)
+// 4. FICHAJES Y ESTADO (Para gráficos)
 // ==========================================
-
-// Leer estado del usuario (¿está trabajando ahora?)
-app.get("/api/status/:id", async (req, res) => {
-  // De momento devolvemos un estado inactivo genérico para que React pueda dibujar la pantalla
-  res.json({ isWorking: false, lastEntry: null });
-});
-
-// Leer lista de fichajes (para tablas y gráficos)
+app.get("/api/status/:id", (req, res) => res.json({ isWorking: false, lastEntry: null }));
 app.get(["/api/attendance", "/api/admin/attendance"], async (req, res) => {
-  // Buscamos los fichajes en Supabase (si tienes la tabla 'fichajes' o 'attendance')
-  // Si no existe la tabla aún, esto no romperá la web gracias al catch
-  try {
-    const { data, error } = await supabase.from('attendance').select('*');
-    if (error) throw error;
-    res.json(data || []);
-  } catch (err) {
-    // Si la tabla no existe en Supabase, devolvemos array vacío para no romper React
-    res.json([]); 
-  }
+  const { data, error } = await supabase.from('attendance').select('*');
+  res.json(error ? [] : data);
 });
 
 // ==========================================
-// 4. SALVAVIDAS (Evita que React se quede en blanco)
+// 5. SALVAVIDAS FINAL
 // ==========================================
 app.use((req, res) => {
-  console.log(`[AVISO] La web intentó acceder a: ${req.method} ${req.originalUrl}`);
-  
-  // Si la web pide datos (GET) que no existen, devolvemos una lista vacía para que no se rompan los gráficos
-  if (req.method === 'GET') {
-    return res.json([]);
-  }
-  
-  // Si intenta guardar algo (POST/PUT), sí mostramos el error
-  res.status(404).json({ error: `Falta programar esta ruta: ${req.method} ${req.originalUrl}` });
+  if (req.method === 'GET') return res.json([]);
+  res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
 });
 
 export default app;

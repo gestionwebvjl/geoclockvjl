@@ -77,6 +77,30 @@ app.post("/api/admin/users", async (req, res) => {
 });
 
 // ==========================================
+// RUTA DE ESTADO Y FICHAJES (Evita la pantalla blanca)
+// ==========================================
+
+// Leer estado del usuario (¿está trabajando ahora?)
+app.get("/api/status/:id", async (req, res) => {
+  // De momento devolvemos un estado inactivo genérico para que React pueda dibujar la pantalla
+  res.json({ isWorking: false, lastEntry: null });
+});
+
+// Leer lista de fichajes (para tablas y gráficos)
+app.get(["/api/attendance", "/api/admin/attendance"], async (req, res) => {
+  // Buscamos los fichajes en Supabase (si tienes la tabla 'fichajes' o 'attendance')
+  // Si no existe la tabla aún, esto no romperá la web gracias al catch
+  try {
+    const { data, error } = await supabase.from('attendance').select('*');
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    // Si la tabla no existe en Supabase, devolvemos array vacío para no romper React
+    res.json([]); 
+  }
+});
+
+// ==========================================
 // 4. SALVAVIDAS (Evita que React se quede en blanco)
 // ==========================================
 app.use((req, res) => {

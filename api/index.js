@@ -136,20 +136,75 @@ app.delete(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) 
 });
 
 // ==========================================
-// 4. FICHAJES Y ESTADO
+// 4. FICHAJES Y ESTADO (EL MOTOR DEL RELOJ)
 // ==========================================
-app.get("/api/status/:id", (req, res) => res.json({ isWorking: false, lastEntry: null }));
-app.get(["/api/attendance", "/api/admin/attendance"], async (req, res) => {
-  const { data, error } = await supabase.from('attendance').select('*');
-  res.json(error ? [] : data);
+
+// Saber si el empleado está trabajando ahora mismo
+app.get("/api/status/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Buscamos su último fichaje
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('user_id', id)
+      .order('timestamp', { ascending: false })
+      .limit(1);
+
+    // Si el último registro fue una entrada (IN), el reloj debe estar corriendo
+    if (data && data.length > 0 && data[0].type === 'IN') {
+      return res.json({ isClockedIn: true, startTime: data[0].timestamp });
+    }
+    res.json({ isClockedIn: false, startTime: null });
+  } catch (err) {
+    res.json({ isClockedIn: false, startTime: null });
+  }
 });
 
-// ==========================================
-// 5. SALVAVIDAS FINAL
-// ==========================================
-app.use((req, res) => {
-  if (req.method === 'GET') return res.json([]);
-  res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
+// Leer el historial de fichajes de un usuario
+app.get("/api/records/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('user_id', id)
+      .order('timestamp', { ascending: false });
+
+    res.json(error ? [] : data);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
+// Guardar un nuevo fichaje (Entrada o Salida)
+app.post("/api/clock", async (req, res) => {
+  try {
+    // La web nos envía los datos, nosotros le añadimos la hora exacta del servidor
+    const nuevoFichaje = {
+      user_id: req.body.user_id,
+      worksite_id: req.body.worksite_id,
+      type: req.body.type, // 'IN' (Entrada) o 'OUT' (Salida)
+      latitude: req.body.latitude,
+      longitude: req.body.longitude,
+      distance: req.body.distance,
+      notes: req.body.notes || '',
+      timestamp: new Date().toISOString() 
+    };
+
+    const { data, error } = await supabase.from('attendance').insert([nuevoFichaje]).select();
+    
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json(data[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Leer TODOS los fichajes (Para el panel de Administrador)
+app.get("/api/admin/records", async (req, res) => {
+  const { data, error } = await supabase.from('attendance').select('*').order('timestamp', { ascending: false });
+  res.json(error ? [] : data);
 });
 
 export default app;

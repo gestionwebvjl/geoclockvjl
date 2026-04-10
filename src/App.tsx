@@ -2140,11 +2140,11 @@ const UserModal = ({ user, onSave, onClose, existingUsers }: { user?: User, onSa
               </div>
             </div>
 
-            {/* --- NUEVO CAMPO DE CONTRASEÑA --- */}
+            {/* --- CAMPO DE CONTRASEÑA --- */}
             <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Contraseña</label>
                 <input 
-                  type="text" // Puedes cambiarlo a "password" si quieres que se vean puntitos ocultos
+                  type="text"
                   required
                   value={formData.password}
                   onChange={e => setFormData({...formData, password: e.target.value})}
@@ -2152,21 +2152,7 @@ const UserModal = ({ user, onSave, onClose, existingUsers }: { user?: User, onSa
                   placeholder="Introduce la contraseña"
                 />
             </div>
-            {/* --------------------------------- */}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">ID Empleado {!user && '(Automático)'}</label>
-                <input 
-                  type="text" 
-                  required
-                  readOnly={!user}
-                  value={formData.employee_id}
-                  onChange={e => setFormData({...formData, employee_id: e.target.value})}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-orange-500/20"
-                />
-              </div>
-              {/*
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">ID Empleado {!user && '(Automático)'}</label>

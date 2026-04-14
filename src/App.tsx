@@ -494,6 +494,13 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
               : `Solo disponible a menos de ${currentSite?.radius || 10}m de la sede (Estás a ${distance !== null ? distance.toFixed(1) : '?'}m)`}
           </p>
         </div>
+        
+        {/* AQUÍ ESTÁ EL AVISO ROJO DEL ERROR GPS */}
+        {geoError && <p className="text-red-500 text-[10px] font-bold mt-2 uppercase w-full text-center">⚠️ Error GPS: {geoError}</p>}
+        
+      </section>
+
+      <section className="flex justify-center pb-4">
       </section>
 
       <section className="flex justify-center pb-4">

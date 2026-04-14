@@ -66,23 +66,21 @@ export const useGeolocation = () => {
       return;
     }
 
-    // Usamos watchPosition en lugar de getCurrentPosition para que se actualice si te mueves
     const watcher = navigator.geolocation.watchPosition(
       (pos) => {
         setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
         setError(null);
       },
       (err) => {
-        // Traducimos los errores más comunes para saber qué pasa
         if (err.code === 1) setError('Permiso de ubicación denegado por el usuario');
         else if (err.code === 2) setError('Posición no disponible (Comprueba tu conexión/GPS)');
         else if (err.code === 3) setError('Tiempo de espera agotado');
         else setError(err.message);
       },
       { 
-        enableHighAccuracy: false, // <-- CLAVE: Si lo ponemos en false, carga al instante incluso en ordenador
-        timeout: 15000,            // Le damos 15 segundos máximo antes de dar error
-        maximumAge: 60000          // Permite usar una ubicación de hace 1 minuto para ser instantáneo
+        enableHighAccuracy: false, // <-- ESTO ES LO QUE LO HACE RÁPIDO
+        timeout: 15000,
+        maximumAge: 60000
       }
     );
 

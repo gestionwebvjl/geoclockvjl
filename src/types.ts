@@ -56,31 +56,38 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
   return R * c; // in metres
 }
 
-export function useGeolocation() {
+export const useGeolocation = () => {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setError("Geolocalización no soportada");
+      setError('Geolocalización no soportada por el navegador');
       return;
     }
 
+    // Usamos watchPosition en lugar de getCurrentPosition para que se actualice si te mueves
     const watcher = navigator.geolocation.watchPosition(
-      (position) => {
-        setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
+      (pos) => {
+        setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setError(null);
       },
       (err) => {
-        setError(err.message);
+        // Traducimos los errores más comunes para saber qué pasa
+        if (err.code === 1) setError('Permiso de ubicación denegado por el usuario');
+        else if (err.code === 2) setError('Posición no disponible (Comprueba tu conexión/GPS)');
+        else if (err.code === 3) setError('Tiempo de espera agotado');
+        else setError(err.message);
       },
-      { enableHighAccuracy: true }
+      { 
+        enableHighAccuracy: false, // <-- CLAVE: Si lo ponemos en false, carga al instante incluso en ordenador
+        timeout: 15000,            // Le damos 15 segundos máximo antes de dar error
+        maximumAge: 60000          // Permite usar una ubicación de hace 1 minuto para ser instantáneo
+      }
     );
 
     return () => navigator.geolocation.clearWatch(watcher);
   }, []);
 
   return { location, error };
-}
+};

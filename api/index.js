@@ -59,6 +59,8 @@ app.delete(["/api/users/:id", "/api/admin/users/:id"], async (req, res) => {
 // ==========================================
 // 3. SEDES (Bilingüe Frontend <-> Supabase)
 // ==========================================
+
+// LEER
 app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   const { data, error } = await supabase.from('sedes').select('*');
   if (error || !data) return res.json([]);
@@ -68,11 +70,39 @@ app.get(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   res.json(sedesFormateadas);
 });
 
+// CREAR
 app.post(["/api/worksites", "/api/admin/worksites"], async (req, res) => {
   const sedeTraducida = { nombre: req.body.name, latitud: req.body.latitude, longitud: req.body.longitude, address: req.body.address, radius: req.body.radius };
   const { data, error } = await supabase.from('sedes').insert([sedeTraducida]).select();
   if (error) return res.status(400).json({ error: error.message });
-  res.status(201).json({ id: data[0].id, name: data[0].nombre, latitude: data[0].latitud, longitude: data[0].longitud, radius: data[0].radius });
+  res.status(201).json({ id: data[0].id, name: data[0].nombre, latitude: data[0].latitud, longitude: data[0].longitud, radius: data[0].radius, address: data[0].address });
+});
+
+// MODIFICAR (Aquí está el arreglo del Radio y la Dirección)
+app.put(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) => {
+  const { id } = req.params;
+  const sedeTraducida = { 
+    nombre: req.body.name, 
+    latitud: req.body.latitude, 
+    longitud: req.body.longitude, 
+    address: req.body.address, 
+    radius: req.body.radius 
+  };
+  
+  const { data, error } = await supabase.from('sedes').update(sedeTraducida).eq('id', id).select();
+  
+  if (error) return res.status(400).json({ error: error.message });
+  if (!data || data.length === 0) return res.status(404).json({ error: "Sede no encontrada" });
+  
+  res.json({ id: data[0].id, name: data[0].nombre, latitude: data[0].latitud, longitude: data[0].longitud, radius: data[0].radius, address: data[0].address });
+});
+
+// BORRAR
+app.delete(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from('sedes').delete().eq('id', id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true });
 });
 
 // ==========================================

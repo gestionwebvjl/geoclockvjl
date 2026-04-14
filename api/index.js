@@ -151,37 +151,83 @@ app.delete(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) 
   }
 });
 // ==========================================
-// 4. FICHAJES (RECORDS)
+// 4. FICHAJES (TRADUCTOR Frontend Inglés <-> BD Español)
 // ==========================================
 
-// Historial de un usuario específico
+// 4.1 Historial de un usuario específico (Leer)
 app.get("/api/records/:id", async (req, res) => {
   const { id } = req.params;
-  const { data, error } = await supabase.from('fichajes').select('*, sedes(nombre)').eq('user_id', id).order('timestamp', { ascending: false });
-  if (error) return res.json([]);
-  res.json(data.map(r => ({ ...r, worksite_name: r.sedes?.nombre || 'Sede desconocida' })));
+  const { data, error } = await supabase.from('fichajes').select('*, sedes(nombre)').eq('empleado_id', id).order('fecha_hora', { ascending: false });
+  if (error || !data) return res.json([]);
+  
+  // Traducimos al inglés para la app web
+  const formateado = data.map(r => ({
+    id: r.id,
+    user_id: r.empleado_id,
+    worksite_id: r.sede_id,
+    type: r.tipo,
+    latitude: r.latitud,
+    longitude: r.longitud,
+    distance: r.distancia_metros,
+    notes: r.notes,
+    timestamp: r.fecha_hora,
+    worksite_name: r.sedes?.nombre || 'Sede desconocida'
+  }));
+  res.json(formateado);
 });
 
-// Historial completo para Admin
+// 4.2 Historial completo para el Panel de Admin (Leer)
 app.get("/api/admin/records", async (req, res) => {
-  const { data, error } = await supabase.from('fichajes').select('*, users(name), sedes(nombre)').order('timestamp', { ascending: false });
-  if (error) return res.json([]);
-  res.json(data.map(r => ({ ...r, user_name: r.users?.name, worksite_name: r.sedes?.nombre })));
+  const { data, error } = await supabase.from('fichajes').select('*, users(name), sedes(nombre)').order('fecha_hora', { ascending: false });
+  if (error || !data) return res.json([]);
+  
+  const formateado = data.map(r => ({
+    id: r.id,
+    user_id: r.empleado_id,
+    worksite_id: r.sede_id,
+    type: r.tipo,
+    latitude: r.latitud,
+    longitude: r.longitud,
+    distance: r.distancia_metros,
+    notes: r.notes,
+    timestamp: r.fecha_hora,
+    user_name: r.users?.name || 'Usuario desconocido',
+    worksite_name: r.sedes?.nombre || 'Sede desconocida'
+  }));
+  res.json(formateado);
 });
 
-// Guardar fichaje
+// 4.3 Guardar un Fichaje (Escribir)
 app.post("/api/clock", async (req, res) => {
-  const nuevo = { ...req.body, timestamp: new Date().toISOString() };
-  const { data, error } = await supabase.from('fichajes').insert([nuevo]).select();
-  if (error) return res.status(400).json({ error: error.message });
-  res.status(201).json(data[0]);
+  try {
+    // Traducimos el inglés de la app al español de Supabase
+    const nuevoFichajeEspañol = {
+      empleado_id: req.body.user_id,
+      sede_id: req.body.worksite_id,
+      tipo: req.body.type,               // 'IN' o 'OUT'
+      latitud: req.body.latitude,
+      longitud: req.body.longitude,
+      distancia_metros: req.body.distance,
+      notes: req.body.notes || '',
+      fecha_hora: new Date().toISOString() // Hora del servidor
+    };
+
+    const { data, error } = await supabase.from('fichajes').insert([nuevoFichajeEspañol]).select();
+    if (error) return res.status(400).json({ error: error.message });
+    
+    res.status(201).json(data[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Estado actual
+// 4.4 Saber si el empleado está trabajando ahora mismo
 app.get("/api/status/:id", async (req, res) => {
-  const { data } = await supabase.from('fichajes').select('*').eq('user_id', req.params.id).order('timestamp', { ascending: false }).limit(1);
-  if (data && data.length > 0 && data[0].type === 'IN') {
-    return res.json({ isClockedIn: true, startTime: data[0].timestamp });
+  const { data } = await supabase.from('fichajes').select('*').eq('empleado_id', req.params.id).order('fecha_hora', { ascending: false }).limit(1);
+  
+  // Comprobamos si el último registro es una Entrada (IN)
+  if (data && data.length > 0 && data[0].tipo === 'IN') {
+    return res.json({ isClockedIn: true, startTime: data[0].fecha_hora });
   }
   res.json({ isClockedIn: false, startTime: null });
 });

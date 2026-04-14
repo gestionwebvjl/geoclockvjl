@@ -160,12 +160,11 @@ app.get("/api/records/:id", async (req, res) => {
   const { data, error } = await supabase.from('fichajes').select('*, sedes(nombre)').eq('empleado_id', id).order('fecha_hora', { ascending: false });
   if (error || !data) return res.json([]);
   
-  // Traducimos al inglés para la app web
   const formateado = data.map(r => ({
     id: r.id,
     user_id: r.empleado_id,
     worksite_id: r.sede_id,
-    type: r.tipo,
+    type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', // <-- Traducimos de vuelta para que la web ponga el color correcto
     latitude: r.latitud,
     longitude: r.longitud,
     distance: r.distancia_metros,
@@ -185,7 +184,7 @@ app.get("/api/admin/records", async (req, res) => {
     id: r.id,
     user_id: r.empleado_id,
     worksite_id: r.sede_id,
-    type: r.tipo,
+    type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT',
     latitude: r.latitud,
     longitude: r.longitud,
     distance: r.distancia_metros,
@@ -200,16 +199,18 @@ app.get("/api/admin/records", async (req, res) => {
 // 4.3 Guardar un Fichaje (Escribir)
 app.post("/api/clock", async (req, res) => {
   try {
-    // Traducimos el inglés de la app al español de Supabase
+    // TRADUCCIÓN: Convertimos el inglés a la regla estricta de Supabase
+    const tipoTraducido = req.body.type === 'IN' ? 'Entrada Jornada' : 'Salida Jornada';
+
     const nuevoFichajeEspañol = {
       empleado_id: req.body.user_id,
       sede_id: req.body.worksite_id,
-      tipo: req.body.type,               // 'IN' o 'OUT'
+      tipo: tipoTraducido, 
       latitud: req.body.latitude,
       longitud: req.body.longitude,
       distancia_metros: req.body.distance,
       notes: req.body.notes || '',
-      fecha_hora: new Date().toISOString() // Hora del servidor
+      fecha_hora: new Date().toISOString()
     };
 
     const { data, error } = await supabase.from('fichajes').insert([nuevoFichajeEspañol]).select();
@@ -225,8 +226,8 @@ app.post("/api/clock", async (req, res) => {
 app.get("/api/status/:id", async (req, res) => {
   const { data } = await supabase.from('fichajes').select('*').eq('empleado_id', req.params.id).order('fecha_hora', { ascending: false }).limit(1);
   
-  // Comprobamos si el último registro es una Entrada (IN)
-  if (data && data.length > 0 && data[0].tipo === 'IN') {
+  // Comprobamos si el último registro es la frase exacta "Entrada Jornada"
+  if (data && data.length > 0 && data[0].tipo === 'Entrada Jornada') {
     return res.json({ isClockedIn: true, startTime: data[0].fecha_hora });
   }
   res.json({ isClockedIn: false, startTime: null });

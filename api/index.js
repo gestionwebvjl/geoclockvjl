@@ -253,10 +253,10 @@ app.get("/api/admin/stats", async (req, res) => {
     });
 
     Object.values(porEmpleado).forEach(fichajes => {
-      fichajes.sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
+      fichajes.sort((a, b) => new Date(a.fecha_hora).getTime() - new Date(b.fecha_hora).getTime());
       for (let i = 0; i < fichajes.length - 1; i++) {
         if (fichajes[i].tipo === 'Entrada Jornada' && fichajes[i+1].tipo === 'Salida Jornada') {
-          totalMs += new Date(fichajes[i+1].fecha_hora) - new Date(fichajes[i].fecha_hora);
+          totalMs += new Date(fichajes[i+1].fecha_hora).getTime() - new Date(fichajes[i].fecha_hora).getTime();
           i++; // Saltamos el de salida porque ya lo hemos emparejado
         }
       }
@@ -273,6 +273,98 @@ app.get("/api/admin/stats", async (req, res) => {
     });
   } catch (err) {
     res.json({ activeEmployees: 0, totalHoursToday: "0.0", pendingAlerts: 0 });
+  }
+});
+
+// ==========================================
+// 6. PERFIL Y SOLICITUDES (Las rutas que faltaban)
+// ==========================================
+
+// Cambiar Contraseña del empleado
+app.post("/api/users/change-password", async (req, res) => {
+  try {
+    const { id, oldPassword, newPassword } = req.body;
+    // Comprobamos que sabe su contraseña actual
+    const { data: user } = await supabase.from('users').select('password').eq('id', id).single();
+    
+    if (!user || user.password !== oldPassword) {
+      return res.status(400).json({ error: "La contraseña actual es incorrecta" });
+    }
+    
+    // Guardamos la nueva
+    const { error } = await supabase.from('users').update({ password: newPassword }).eq('id', id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Actualizar Perfil (Nombre y Departamento)
+app.post("/api/users/update", async (req, res) => {
+  try {
+    const { id, name, department } = req.body;
+    const { data, error } = await supabase.from('users').update({ name, department }).eq('id', id).select();
+    if (error) throw error;
+    res.json(data[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Leer Solicitudes Pendientes (Las "Alertas" de fuera de rango)
+app.get("/api/admin/pending-records", async (req, res) => {
+  try {
+    // Traemos los fichajes que están a más de 100 metros para que el admin los revise
+    const { data, error } = await supabase
+      .from('fichajes')
+      .select('*, users(name), sedes(nombre)')
+      .gt('distancia_metros', 100)
+      .order('fecha_hora', { ascending: false });
+      
+    if (error || !data) return res.json([]);
+
+    const formateado = data.map(r => ({
+      id: r.id,
+      user_name: r.users?.name || 'Usuario desconocido',
+      worksite_name: r.sedes?.nombre || 'Sede desconocida',
+      type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT',
+      timestamp: r.fecha_hora,
+      notes: r.notes || 'Fichaje fuera de rango',
+      is_manual: false
+    }));
+    res.json(formateado);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
+// Aprobar/Rechazar un fichaje (Para que la alerta desaparezca)
+app.post("/api/admin/records/approve", async (req, res) => {
+  try {
+    const { id, status } = req.body;
+    if (status === 'REJECTED') {
+      // Si el admin lo rechaza, lo borramos de la base de datos
+      await supabase.from('fichajes').delete().eq('id', id);
+    } else {
+      // Si lo aprueba, le perdonamos la distancia poniéndola a 0 para que no salga más en alertas
+      await supabase.from('fichajes').update({ distancia_metros: 0, notes: 'Aprobado por el Administrador' }).eq('id', id);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// 7. SALVAVIDAS FINAL Y EXPORTACIÓN
+// ==========================================
+app.use((req, res) => {
+  if (req.method === 'GET') return res.json([]);
+  res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
+});
+
+export default app;
   }
 });
 

@@ -234,23 +234,46 @@ app.get("/api/status/:id", async (req, res) => {
 });
 
 // ==========================================
-// 5. ESTADÍSTICAS (STATS) - Requerido por Dashboard
+// 5. ESTADÍSTICAS (STATS) - Inteligencia Real
 // ==========================================
 app.get("/api/admin/stats", async (req, res) => {
-  const { data: users } = await supabase.from('users').select('id');
-  const { data: fichajesHoy } = await supabase.from('fichajes').select('*').gte('timestamp', new Date().toISOString().split('T')[0]);
-  
-  res.json({
-    activeEmployees: users?.length || 0,
-    totalHoursToday: "0.0", // Cálculo simplificado
-    pendingAlerts: fichajesHoy?.filter(f => f.distance > 100).length || 0
-  });
-});
+  try {
+    const { data: users } = await supabase.from('users').select('id');
+    
+    // Buscamos solo los fichajes de HOY
+    const hoy = new Date().toISOString().split('T')[0];
+    const { data: fichajesHoy } = await supabase.from('fichajes').select('*').gte('fecha_hora', hoy);
 
-// Salvavidas
-app.use((req, res) => {
-  if (req.method === 'GET') return res.json([]);
-  res.status(404).json({ error: "Ruta no encontrada" });
+    // 1. Calculamos las HORAS TOTALES de hoy sumando los turnos cerrados
+    let totalMs = 0;
+    const porEmpleado = {};
+    (fichajesHoy || []).forEach(f => {
+      if (!porEmpleado[f.empleado_id]) porEmpleado[f.empleado_id] = [];
+      porEmpleado[f.empleado_id].push(f);
+    });
+
+    Object.values(porEmpleado).forEach(fichajes => {
+      fichajes.sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
+      for (let i = 0; i < fichajes.length - 1; i++) {
+        if (fichajes[i].tipo === 'Entrada Jornada' && fichajes[i+1].tipo === 'Salida Jornada') {
+          totalMs += new Date(fichajes[i+1].fecha_hora) - new Date(fichajes[i].fecha_hora);
+          i++; // Saltamos el de salida porque ya lo hemos emparejado
+        }
+      }
+    });
+    const horasHoy = (totalMs / 3600000).toFixed(1);
+
+    // 2. Calculamos las ALERTAS (Gente que ha fichado a más de 100 metros)
+    const alertas = (fichajesHoy || []).filter(f => f.distancia_metros > 100).length;
+
+    res.json({
+      activeEmployees: users?.length || 0,
+      totalHoursToday: horasHoy,
+      pendingAlerts: alertas
+    });
+  } catch (err) {
+    res.json({ activeEmployees: 0, totalHoursToday: "0.0", pendingAlerts: 0 });
+  }
 });
 
 export default app;

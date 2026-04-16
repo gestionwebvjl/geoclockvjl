@@ -79,58 +79,6 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 
 
 // --- PDF Generation Utilities ---
 
-const generateRecordPDF = (record: Record, user: User) => {
-  const doc = new jsPDF();
-  
-  // Header
-  doc.setFontSize(22);
-  doc.setTextColor(255, 140, 0); // Orange
-  doc.text('GeoClock - Comprobante de Registro', 20, 20);
-  
-  doc.setFontSize(12);
-  doc.setTextColor(100);
-  doc.text(`Generado el: ${new Date().toLocaleString('es-ES')}`, 20, 30);
-  
-  // User Info
-  doc.setFontSize(16);
-  doc.setTextColor(0);
-  doc.text('Información del Empleado', 20, 45);
-  doc.setFontSize(12);
-  doc.text(`Nombre: ${record.user_name || user.name}`, 20, 55);
-  doc.text(`Email: ${user.email}`, 20, 62);
-  doc.text(`ID Empleado: ${user.employee_id}`, 20, 69);
-  doc.text(`Departamento: ${user.department}`, 20, 76);
-  
-  // Record Info
-  doc.setFontSize(16);
-  doc.text('Detalles del Registro', 20, 90);
-  doc.setFontSize(12);
-  doc.text(`Tipo: ${record.type === 'IN' ? 'ENTRADA' : 'SALIDA'}`, 20, 100);
-  doc.text(`Fecha: ${new Date(record.timestamp).toLocaleDateString('es-ES')}`, 20, 107);
-  doc.text(`Hora: ${new Date(record.timestamp).toLocaleTimeString('es-ES')}`, 20, 114);
-  doc.text(`Sede: ${record.worksite_name}`, 20, 121);
-  doc.text(`Distancia: ${(record.distance || 0).toFixed(1)}m`, 20, 128);
-  doc.text(`Coordenadas: ${(record.latitude || 0).toFixed(6)}, ${(record.longitude || 0).toFixed(6)}`, 20, 135);
-  doc.text(`Método: ${record.is_manual ? 'Manual' : 'Automático (GPS)'}`, 20, 142);
-  
-  if (record.notes) {
-    doc.text('Notas:', 20, 155);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    const splitNotes = doc.splitTextToSize(record.notes, 170);
-    doc.text(splitNotes, 20, 162);
-  }
-  
-  doc.setFontSize(10);
-  doc.setTextColor(150);
-  doc.text('Este documento es un comprobante oficial generado por el sistema GeoClock.', 20, 280);
-  
-  const rDate = new Date(record.timestamp);
-  const fileDate = `${rDate.getFullYear()}-${(rDate.getMonth() + 1).toString().padStart(2, '0')}-${rDate.getDate().toString().padStart(2, '0')}`;
-  const randomSuffix = Math.floor(Math.random() * 1000);
-  doc.save(`Registro_${record.type}_${fileDate}_${randomSuffix}.pdf`);
-};
-
 const generateFullReportPDF = (records: Record[], user: User, periodLabel?: string) => {
   if (!records || records.length === 0) return;
   
@@ -172,6 +120,7 @@ const generateFullReportPDF = (records: Record[], user: User, periodLabel?: stri
   Object.values(recordsByUser).forEach((userData, userIdx) => {
     const sortedRecords = [...userData.records].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     
+    // Guardamos los totales diarios en Milisegundos para no perder precisión
     const dailyTotals: { [key: string]: number } = {};
     const recordsByDate: { [key: string]: Record[] } = {};
 
@@ -193,7 +142,7 @@ const generateFullReportPDF = (records: Record[], user: User, periodLabel?: stri
           i++;
         }
       }
-      dailyTotals[dateStr] = totalMs;
+      dailyTotals[dateStr] = totalMs; // Milisegundos exactos
     });
 
     if (isConsolidated) {
@@ -218,6 +167,7 @@ const generateFullReportPDF = (records: Record[], user: User, periodLabel?: stri
       const isLastOfDay = dayLastRecordIndex[dateStr] === idx;
       const dayTotalMs = dailyTotals[dateStr];
       
+      // Transformamos a Horas y Minutos reales
       let dayTotalStr = '';
       if (isLastOfDay && dayTotalMs > 0) {
         const h = Math.floor(dayTotalMs / 3600000);
@@ -238,6 +188,7 @@ const generateFullReportPDF = (records: Record[], user: User, periodLabel?: stri
       ];
     });
     
+    // Total final del empleado en Horas y Minutos
     const totalUserH = Math.floor(totalUserMs / 3600000);
     const totalUserM = Math.floor((totalUserMs % 3600000) / 60000);
 
@@ -245,7 +196,7 @@ const generateFullReportPDF = (records: Record[], user: User, periodLabel?: stri
       startY: currentY,
       head: [['Fecha', 'Hora', 'Tipo', 'Sede', 'Distancia', 'Método', 'Total Día']],
       body: tableData,
-      foot: [['', '', '', '', '', 'TOTAL:', `${totalUserH}h ${totalUserM}m`]],
+      foot: [['', '', '', '', '', 'TOTAL EMPLEADO:', `${totalUserH}h ${totalUserM}m`]],
       headStyles: { fillColor: [255, 140, 0] },
       footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [245, 245, 245] },

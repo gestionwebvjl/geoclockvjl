@@ -462,16 +462,17 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
       <section className="grid grid-cols-2 gap-4">
         <div className="bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
           <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Horas Hoy</p>
-          <p className="text-2xl font-black text-white">{stats.todayStr}</p>
+          {/* AQUÍ PINTAMOS LAS HORAS DE HOY */}
+          <p className="text-2xl font-black text-white">{stats.todayStr || '0h 0m'}</p>
           <div className="flex items-center gap-1 text-green-400 text-[10px] font-bold mt-1">
             <TrendingUp className="w-3 h-3" /> Turno actual
           </div>
         </div>
         <div className="bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
           <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Puntualidad</p>
-          <p className="text-2xl font-black text-white">100%</p>
+          <p className="text-2xl font-black text-white">--%</p>
           <div className="flex items-center gap-1 text-[#ff8c00] text-[10px] font-bold mt-1">
-            <Check className="w-3 h-3" /> Excelente
+            <Check className="w-3 h-3" /> Sin datos
           </div>
         </div>
       </section>
@@ -479,12 +480,13 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
       <section className="bg-slate-900 rounded-xl p-5 border border-orange-500/5 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-slate-300">Esta semana</h3>
-          <span className="text-[#ff8c00] font-bold text-lg">{stats.weekStr}</span>
+          {/* AQUÍ PINTAMOS LAS HORAS DE LA SEMANA */}
+          <span className="text-[#ff8c00] font-bold text-lg">{stats.weekStr || '0h 0m'}</span>
         </div>
         <div className="w-full bg-orange-500/10 rounded-full h-2.5 mb-2">
-          <div className="bg-[#ff8c00] h-2.5 rounded-full" style={{ width: `${stats.weekPct}%` }}></div>
+          <div className="bg-[#ff8c00] h-2.5 rounded-full" style={{ width: `${stats.weekPct || 0}%` }}></div>
         </div>
-        <p className="text-xs text-slate-500">Objetivo: 40h 0m</p>
+        <p className="text-xs text-slate-500">Objetivo: 40h 00m</p>
       </section>
 
       <section className="space-y-3">

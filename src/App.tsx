@@ -2594,24 +2594,57 @@ if (user.role === 'ADMIN') fetchAdminData();
 }
 };
 const handleClockOut = async (notes: string) => {
-if (!user || !location) return;
-// For clock out we'll just use the last worksite or a generic one for this demo
-const lastRecord = userRecords[0];
-const worksites = await fetch('/api/worksites').then(res => res.json());
-const site = worksites.find((w: any) => w.id === lastRecord.worksite_id);
-const dist = calculateDistance(location.latitude, location.longitude, site.latitude, site.longitude);
-const res = await fetch('/api/clock', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-user_id: user.id,
-worksite_id: lastRecord.worksite_id,
-type: 'OUT',
-latitude: location.latitude,
-longitude: location.longitude,
-distance: dist,
-notes: notes
-})
+    if (!user || !location) return;
+    const lastRecord = userRecords[0];
+    const worksites = await fetch('/api/worksites').then(res => res.json());
+    const site = worksites.find((w: any) => w.id === lastRecord.worksite_id);
+    const dist = calculateDistance(location.latitude, location.longitude, site.latitude, site.longitude);
+    
+    // --- LÓGICA DE HORAS EXTRA ---
+    const now = new Date();
+    const currentTimeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+    
+    // Miramos qué salida le toca (si es antes de las 14:30 suele ser turno de mañana)
+    const esManana = now.getHours() < 14 || (now.getHours() === 14 && now.getMinutes() < 30);
+    const horaSalidaPrevista = esManana ? (user.horario_manana_fin || "14:00") : (user.horario_tarde_fin || "18:00");
+    
+    const [hP, mP] = horaSalidaPrevista.split(':').map(Number);
+    const previstoMs = (hP * 60 + mP) * 60000;
+    const actualMs = (now.getHours() * 60 + now.getMinutes()) * 60000;
+    
+    let minutosExtra = 0;
+    let estadoExtra = 'N/A';
+    
+    // Si ha salido al menos 5 minutos tarde, lo contamos como extra
+    if (actualMs > previstoMs + 300000) {
+      minutosExtra = Math.floor((actualMs - previstoMs) / 60000);
+      estadoExtra = 'PENDIENTE';
+    }
+    // ----------------------------
+
+    const res = await fetch('/api/clock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        user_id: user.id, 
+        worksite_id: lastRecord.worksite_id, 
+        type: 'OUT', 
+        latitude: location.latitude, 
+        longitude: location.longitude, 
+        distance: dist, 
+        notes,
+        minutos_extra: minutosExtra,
+        estado_extra: estadoExtra
+      })
+    });
+
+    if (res.ok) { 
+      setIsClockedIn(false); 
+      setStartTime(null); 
+      fetch(`/api/records/${user.id}`).then(res => res.json()).then(setUserRecords); 
+      if (user.role === 'ADMIN') fetchAdminData(); 
+    }
+  };
 });
 if (res.ok) {
 setIsClockedIn(false);

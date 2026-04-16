@@ -121,125 +121,154 @@ const randomSuffix = Math.floor(Math.random() * 1000);
 doc.save(`Registro_${record.type}_${fileDate}_${randomSuffix}.pdf`);
 };
 const generateFullReportPDF = (records: Record[], user: User, periodLabel?: string) => {
-if (!records || records.length === 0) return;
-const doc = new jsPDF();
-doc.setFontSize(22);
-doc.setTextColor(255, 140, 0);
-doc.text('GeoClock - Informe de Asistencia', 20, 20);
-doc.setFontSize(12);
-doc.setTextColor(100);
-const isConsolidated = user.employee_id === 'ADMIN';
-if (!isConsolidated) {
-doc.text(`Empleado: ${user.name} (${user.employee_id})`, 20, 30);
-} else {
-doc.text(`Informe Consolidado de Administración`, 20, 30);
-}
-const startDateLabel = periodLabel || new Date(records[0].timestamp).toLocaleDateString('es-ES');
-const endDateLabel = periodLabel ? '' : ` - ${new Date(records[records.length - 1].timestamp).toLocaleDateString('es-ES')}`;
-doc.text(`Periodo: ${startDateLabel}${endDateLabel}`, 20, 37);
-// Group records by user if it's a consolidated report
-const recordsByUser: { [key: string]: { name: string, records: Record[] } } = {};
-if (isConsolidated) {
-records.forEach(r => {
-const userName = r.user_name || `ID: ${r.user_id}`;
-if (!recordsByUser[userName]) recordsByUser[userName] = { name: userName, records: [] };
-recordsByUser[userName].records.push(r);
-});
-} else {
-recordsByUser[user.name] = { name: user.name, records: records };
-}
-let currentY = 45;
-Object.values(recordsByUser).forEach((userData, userIdx) => {
-const sortedRecords = [...userData.records].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-// Pre-calculate daily totals for this user
-const dailyTotals: { [key: string]: number } = {};
-const recordsByDate: { [key: string]: Record[] } = {};
-sortedRecords.forEach(r => {
-const dateStr = new Date(r.timestamp).toLocaleDateString('es-ES');
-if (!recordsByDate[dateStr]) recordsByDate[dateStr] = [];
-recordsByDate[dateStr].push(r);
-});
-let totalUserMs = 0;
-Object.entries(recordsByDate).forEach(([dateStr, dayRecords]) => {
-let totalMs = 0;
-const sorted = [...dayRecords].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-for (let i = 0; i < sorted.length; i++) {
-if (sorted[i].type === 'IN' && sorted[i+1]?.type === 'OUT') {
-const diff = new Date(sorted[i+1].timestamp).getTime() - new Date(sorted[i].timestamp).getTime();
-totalMs += diff;
-totalUserMs += diff;
-i++;
-}
-}
-dailyTotals[dateStr] = totalMs; // <-- CAMBIO CLAVE: Guardamos en milisegundos reales
-});
-if (isConsolidated) {
-if (userIdx > 0) {
-// Add a page break if it's not the first user and we're low on space, or just always for clarity
-doc.addPage();
-currentY = 20;
-}
-doc.setFontSize(14);
-doc.setTextColor(0);
-doc.text(`Empleado: ${userData.name}`, 20, currentY);
-currentY += 10;
-}
-// Track which rows are the last of their day to show the total
-const dayLastRecordIndex: { [key: string]: number } = {};
-sortedRecords.forEach((r, idx) => {
-const dateStr = new Date(r.timestamp).toLocaleDateString('es-ES');
-dayLastRecordIndex[dateStr] = idx;
-});
-const tableData = sortedRecords.map((r, idx) => {
-const dateStr = new Date(r.timestamp).toLocaleDateString('es-ES');
-const isLastOfDay = dayLastRecordIndex[dateStr] === idx;
-const dayTotalMs = dailyTotals[dateStr];
+  if (!records || records.length === 0) return;
+  
+  const doc = new jsPDF();
+  
+  doc.setFontSize(22);
+  doc.setTextColor(255, 140, 0);
+  doc.text('GeoClock - Informe de Asistencia', 20, 20);
+  
+  doc.setFontSize(12);
+  doc.setTextColor(100);
+  
+  const isConsolidated = user.employee_id === 'ADMIN';
+  
+  if (!isConsolidated) {
+    doc.text(`Empleado: ${user.name} (${user.employee_id})`, 20, 30);
+  } else {
+    doc.text(`Informe Consolidado de Administración`, 20, 30);
+  }
+  
+  const startDateLabel = periodLabel || new Date(records[0].timestamp).toLocaleDateString('es-ES');
+  const endDateLabel = periodLabel ? '' : ` - ${new Date(records[records.length - 1].timestamp).toLocaleDateString('es-ES')}`;
+  doc.text(`Periodo: ${startDateLabel}${endDateLabel}`, 20, 37);
 
-// <-- CAMBIO CLAVE: Pasamos a formato horas y minutos exactos
-let dayTotalStr = '';
-if (isLastOfDay && dayTotalMs > 0) {
-  const h = Math.floor(dayTotalMs / 3600000);
-  const m = Math.floor((dayTotalMs % 3600000) / 60000);
-  dayTotalStr = `${h}h ${m}m`;
-} else if (isLastOfDay && dayTotalMs === 0) {
-  dayTotalStr = '0h 0m';
-}
+  const recordsByUser: { [key: string]: { name: string, records: Record[] } } = {};
+  
+  if (isConsolidated) {
+    records.forEach(r => {
+      const userName = r.user_name || `ID: ${r.user_id}`;
+      if (!recordsByUser[userName]) recordsByUser[userName] = { name: userName, records: [] };
+      recordsByUser[userName].records.push(r);
+    });
+  } else {
+    recordsByUser[user.name] = { name: user.name, records: records };
+  }
 
-return [
-dateStr,
-new Date(r.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-r.type === 'IN' ? 'Entrada' : 'Salida',
-r.worksite_name,
-`${(r.distance || 0).toFixed(1)}m`,
-r.is_manual ? 'Manual' : 'GPS',
-dayTotalStr
-];
-});
+  let currentY = 45;
 
-// <-- CAMBIO CLAVE: Total final del empleado en horas y minutos
-const totalUserH = Math.floor(totalUserMs / 3600000);
-const totalUserM = Math.floor((totalUserMs % 3600000) / 60000);
+  Object.values(recordsByUser).forEach((userData, userIdx) => {
+    // 1. Ordenamos TODOS los registros en una línea de tiempo continua
+    const sortedRecords = [...userData.records].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    
+    // 2. Variables para acumular tiempo real
+    const dailyTotals: { [key: string]: number } = {};
+    let totalUserMs = 0;
 
-autoTable(doc, {
-startY: currentY,
-head: [['Fecha', 'Hora', 'Tipo', 'Sede', 'Distancia', 'Método', 'Total Día']],
-body: tableData,
-foot: [['', '', '', '', '', 'TOTAL EMPLEADO:', `${totalUserH}h ${totalUserM}m`]],
-headStyles: { fillColor: [255, 140, 0] },
-footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-alternateRowStyles: { fillColor: [245, 245, 245] },
-margin: { top: 20 },
-didDrawPage: (data) => {
-currentY = data.cursor?.y || currentY;
-}
-});
-currentY = (doc as any).lastAutoTable.finalY + 15;
-});
-const safeName = user.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-const firstRecordDate = new Date(records[0].timestamp);
-const fileDate = `${firstRecordDate.getFullYear()}-${(firstRecordDate.getMonth() + 1).toString().padStart(2, '0')}-${firstRecordDate.getDate().toString().padStart(2, '0')}`;
-const randomSuffix = Math.floor(Math.random() * 1000);
-doc.save(`Informe_${safeName}_${fileDate}_${randomSuffix}.pdf`);
+    // 3. NUEVA LÓGICA: Emparejamos IN con OUT a prueba de fallos
+    for (let i = 0; i < sortedRecords.length; i++) {
+      if (sortedRecords[i].type === 'IN') {
+        let nextOutIdx = -1;
+        
+        // Buscamos hacia adelante la primera Salida (OUT)
+        for (let j = i + 1; j < sortedRecords.length; j++) {
+          if (sortedRecords[j].type === 'OUT') {
+            nextOutIdx = j;
+            break;
+          } else if (sortedRecords[j].type === 'IN') {
+            // Si el empleado fichó IN dos veces seguidas (olvidó salir), ignoramos el primer IN
+            break; 
+          }
+        }
+
+        if (nextOutIdx !== -1) {
+          const inTime = new Date(sortedRecords[i].timestamp).getTime();
+          const outTime = new Date(sortedRecords[nextOutIdx].timestamp).getTime();
+          const diff = outTime - inTime;
+          
+          totalUserMs += diff;
+          
+          // Sumamos el tiempo al día en que terminó el turno (por si cruzó la medianoche)
+          const outDateStr = new Date(sortedRecords[nextOutIdx].timestamp).toLocaleDateString('es-ES');
+          if (!dailyTotals[outDateStr]) dailyTotals[outDateStr] = 0;
+          dailyTotals[outDateStr] += diff;
+
+          // Avanzamos el bucle principal para saltarnos los registros ya procesados
+          i = nextOutIdx;
+        }
+      }
+    }
+
+    if (isConsolidated) {
+      if (userIdx > 0) {
+        doc.addPage();
+        currentY = 20;
+      }
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text(`Empleado: ${userData.name}`, 20, currentY);
+      currentY += 10;
+    }
+
+    const dayLastRecordIndex: { [key: string]: number } = {};
+    sortedRecords.forEach((r, idx) => {
+      const dateStr = new Date(r.timestamp).toLocaleDateString('es-ES');
+      dayLastRecordIndex[dateStr] = idx;
+    });
+
+    const tableData = sortedRecords.map((r, idx) => {
+      const dateStr = new Date(r.timestamp).toLocaleDateString('es-ES');
+      const isLastOfDay = dayLastRecordIndex[dateStr] === idx;
+      const dayTotalMs = dailyTotals[dateStr] || 0;
+      
+      let dayTotalStr = '';
+      if (isLastOfDay && dayTotalMs > 0) {
+        const h = Math.floor(dayTotalMs / 3600000);
+        const m = Math.floor((dayTotalMs % 3600000) / 60000);
+        dayTotalStr = `${h}h ${m}m`;
+      } else if (isLastOfDay && dayTotalMs === 0) {
+        dayTotalStr = '0h 0m';
+      }
+      
+      return [
+        dateStr,
+        new Date(r.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+        r.type === 'IN' ? 'Entrada' : 'Salida',
+        r.worksite_name,
+        `${(r.distance || 0).toFixed(1)}m`,
+        r.is_manual ? 'Manual' : 'GPS',
+        dayTotalStr
+      ];
+    });
+    
+    // Total final en horas y minutos exactos
+    const totalUserH = Math.floor(totalUserMs / 3600000);
+    const totalUserM = Math.floor((totalUserMs % 3600000) / 60000);
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Fecha', 'Hora', 'Tipo', 'Sede', 'Distancia', 'Método', 'Total Día']],
+      body: tableData,
+      foot: [['', '', '', '', '', 'TOTAL EMPLEADO:', `${totalUserH}h ${totalUserM}m`]],
+      headStyles: { fillColor: [255, 140, 0] },
+      footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { top: 20 },
+      didDrawPage: (data) => {
+        currentY = data.cursor?.y || currentY;
+      }
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 15;
+  });
+  
+  const safeName = user.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  const firstRecordDate = new Date(records[0].timestamp);
+  const fileDate = `${firstRecordDate.getFullYear()}-${(firstRecordDate.getMonth() + 1).toString().padStart(2, '0')}-${firstRecordDate.getDate().toString().padStart(2, '0')}`;
+  const randomSuffix = Math.floor(Math.random() * 1000);
+  
+  doc.save(`Informe_${safeName}_${fileDate}_${randomSuffix}.pdf`);
 };
 // --- Components ---
 const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {

@@ -171,7 +171,7 @@ totalUserMs += diff;
 i++;
 }
 }
-dailyTotals[dateStr] = totalMs / 3600000;
+dailyTotals[dateStr] = totalMs; // <-- CAMBIO CLAVE: Guardamos en milisegundos reales
 });
 if (isConsolidated) {
 if (userIdx > 0) {
@@ -193,7 +193,18 @@ dayLastRecordIndex[dateStr] = idx;
 const tableData = sortedRecords.map((r, idx) => {
 const dateStr = new Date(r.timestamp).toLocaleDateString('es-ES');
 const isLastOfDay = dayLastRecordIndex[dateStr] === idx;
-const dayTotal = dailyTotals[dateStr];
+const dayTotalMs = dailyTotals[dateStr];
+
+// <-- CAMBIO CLAVE: Pasamos a formato horas y minutos exactos
+let dayTotalStr = '';
+if (isLastOfDay && dayTotalMs > 0) {
+  const h = Math.floor(dayTotalMs / 3600000);
+  const m = Math.floor((dayTotalMs % 3600000) / 60000);
+  dayTotalStr = `${h}h ${m}m`;
+} else if (isLastOfDay && dayTotalMs === 0) {
+  dayTotalStr = '0h 0m';
+}
+
 return [
 dateStr,
 new Date(r.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
@@ -201,14 +212,19 @@ r.type === 'IN' ? 'Entrada' : 'Salida',
 r.worksite_name,
 `${(r.distance || 0).toFixed(1)}m`,
 r.is_manual ? 'Manual' : 'GPS',
-isLastOfDay && dayTotal > 0 ? `${dayTotal.toFixed(2)}h` : (isLastOfDay && dayTotal === 0 ? '0.00h' : '')
+dayTotalStr
 ];
 });
+
+// <-- CAMBIO CLAVE: Total final del empleado en horas y minutos
+const totalUserH = Math.floor(totalUserMs / 3600000);
+const totalUserM = Math.floor((totalUserMs % 3600000) / 60000);
+
 autoTable(doc, {
 startY: currentY,
 head: [['Fecha', 'Hora', 'Tipo', 'Sede', 'Distancia', 'Método', 'Total Día']],
 body: tableData,
-foot: [['', '', '', '', '', 'TOTAL EMPLEADO:', `${(totalUserMs / 3600000).toFixed(2)}h`]],
+foot: [['', '', '', '', '', 'TOTAL EMPLEADO:', `${totalUserH}h ${totalUserM}m`]],
 headStyles: { fillColor: [255, 140, 0] },
 footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
 alternateRowStyles: { fillColor: [245, 245, 245] },

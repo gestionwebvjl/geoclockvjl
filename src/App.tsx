@@ -1939,17 +1939,75 @@ className="w-16 h-16 rounded-full bg-[#ff8c00] shadow-xl shadow-orange-500/30 fl
 </div>
 );
 };
-const UserModal = ({ user, onSave, onClose, existingUsers }: { user?: User, onSave: (u: any) => Promise<void>, onClose: () => void, existingUsers: User[] }) => {
-const [formData, setFormData] = useState({
-name: user?.name || '',
-email: user?.email || '',
-password: user?.password || 'password123',
-employee_id: user?.employee_id || '',
-department: user?.department || '',
-position: user?.position || '',
-role: (user?.role || 'USER') as 'USER' | 'ADMIN'
-});
-const [loading, setLoading] = useState(false);
+const UserModal = ({ user, onSave, onClose }: { user?: User, onSave: (u: any) => Promise<void>, onClose: () => void }) => {
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    password: user?.password || '123456',
+    employee_id: user?.employee_id || '',
+    department: user?.department || '',
+    role: (user?.role || 'USER') as 'USER' | 'ADMIN',
+    // Nuevos campos de horario
+    horario_manana_inicio: user?.horario_manana_inicio || '08:00',
+    horario_manana_fin: user?.horario_manana_fin || '14:00',
+    horario_tarde_inicio: user?.horario_tarde_inicio || '15:00',
+    horario_tarde_fin: user?.horario_tarde_fin || '18:00',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSave(formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-slate-950 border border-slate-800 w-full max-w-md rounded-3xl p-8 space-y-6 overflow-y-auto max-h-[90vh]">
+        <h3 className="text-2xl font-bold text-white">{user ? 'Editar' : 'Añadir'} Empleado</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
+            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-900 p-3 rounded-xl border border-slate-800 text-white outline-none" placeholder="Nombre completo" />
+            <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-900 p-3 rounded-xl border border-slate-800 text-white outline-none" placeholder="Email" />
+            <input type="text" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-900 p-3 rounded-xl border border-slate-800 text-white outline-none" placeholder="Contraseña" />
+            
+            <div className="grid grid-cols-2 gap-3">
+               <input type="text" value={formData.employee_id} onChange={e => setFormData({...formData, employee_id: e.target.value})} className="bg-slate-900 p-3 rounded-xl border border-slate-800 text-white outline-none" placeholder="ID Empleado" />
+               <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as any})} className="bg-slate-900 p-3 rounded-xl border border-slate-800 text-white outline-none">
+                <option value="USER">Usuario</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-800">
+            <p className="text-[10px] font-bold text-orange-500 uppercase mb-3">Horario Laboral (Cálculo Extras)</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] text-slate-500 font-bold uppercase">Mañana</label>
+                <div className="flex gap-2">
+                  <input type="time" value={formData.horario_manana_inicio} onChange={e => setFormData({...formData, horario_manana_inicio: e.target.value})} className="bg-slate-900 p-2 text-xs rounded-lg border border-slate-800 text-white w-full" />
+                  <input type="time" value={formData.horario_manana_fin} onChange={e => setFormData({...formData, horario_manana_fin: e.target.value})} className="bg-slate-900 p-2 text-xs rounded-lg border border-slate-800 text-white w-full" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] text-slate-500 font-bold uppercase">Tarde</label>
+                <div className="flex gap-2">
+                  <input type="time" value={formData.horario_tarde_inicio} onChange={e => setFormData({...formData, horario_tarde_inicio: e.target.value})} className="bg-slate-900 p-2 text-xs rounded-lg border border-slate-800 text-white w-full" />
+                  <input type="time" value={formData.horario_tarde_fin} onChange={e => setFormData({...formData, horario_tarde_fin: e.target.value})} className="bg-slate-900 p-2 text-xs rounded-lg border border-slate-800 text-white w-full" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button type="submit" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-colors">GUARDAR</button>
+            <button type="button" onClick={onClose} className="flex-1 bg-slate-800 text-slate-400 py-3 rounded-xl font-bold transition-colors">CANCELAR</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 // Auto-generate employee ID for new users
 useEffect(() => {
 if (!user) {

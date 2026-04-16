@@ -366,6 +366,7 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
       }
     }
 
+    // Calculamos horas y minutos exactos
     const tH = Math.floor(todayMs / 3600000);
     const tM = Math.floor((todayMs % 3600000) / 60000);
     const wH = Math.floor(weekMs / 3600000);

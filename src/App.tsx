@@ -1221,20 +1221,31 @@ className={`w-12 h-6 rounded-full transition-colors relative ${settings[item.key
 </div>
 );
 };
-const PendingRequestsView = ({ onBack, onActionComplete, onSelectRecord }: { onBack: () => void, onActionComplete: () => void, onSelectRecord: (record: Record) => void }) => {
-const [requests, setRequests] = useState<Record[]>([]);
-const [loading, setLoading] = useState(true);
-const fetchRequests = async () => {
-try {
-const res = await fetch('/api/admin/pending-records');
-const data = await res.json();
-setRequests(data);
-} catch (err) {
-console.error(err);
-} finally {
-setLoading(false);
-}
-};
+requests.map(req => (
+          <div key={req.id} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+            <div className="flex justify-between items-start cursor-pointer" onClick={() => onSelectRecord(req)}>
+              <div>
+                <p className="font-bold text-white text-lg">{req.user_name}</p>
+                <p className="text-xs text-slate-500">{req.worksite_name} • {new Date(req.timestamp).toLocaleString()}</p>
+              </div>
+              <div className="flex flex-col gap-1 items-end">
+                {req.distancia_metros > 100 && <span className="text-red-500 font-black text-[10px] bg-red-500/10 px-2 py-1 rounded">FUERA RANGO</span>}
+                {req.estado_extra === 'PENDIENTE' && <span className="text-orange-500 font-black text-[10px] bg-orange-500/10 px-2 py-1 rounded">+{req.minutos_extra} MIN EXTRAS</span>}
+              </div>
+            </div>
+            
+            {req.estado_extra === 'PENDIENTE' && (
+              <p className="text-xs text-slate-400 italic bg-slate-800/50 p-3 rounded-xl border border-slate-800">
+                El empleado ha finalizado su jornada después de su horario teórico ({req.minutos_extra} min de exceso).
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <button onClick={() => handleAction(req.id, 'APPROVED')} className="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold text-xs hover:bg-green-600 transition-colors">APROBAR</button>
+              <button onClick={() => handleAction(req.id, 'REJECTED')} className="flex-1 bg-red-500/10 text-red-500 py-3 rounded-xl font-bold text-xs hover:bg-red-500/20 transition-colors">RECHAZAR</button>
+            </div>
+          </div>
+        ))
 useEffect(() => {
 fetchRequests();
 }, []);

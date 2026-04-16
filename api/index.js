@@ -29,7 +29,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // ==========================================
-// 2. USUARIOS
+// 2. USUARIOS (Acepta los nuevos horarios)
 // ==========================================
 app.get(["/api/users", "/api/admin/users"], async (req, res) => {
   const { data, error } = await supabase.from('users').select('*');
@@ -108,7 +108,7 @@ app.delete(["/api/worksites/:id", "/api/admin/worksites/:id"], async (req, res) 
 });
 
 // ==========================================
-// 4. FICHAJES
+// 4. FICHAJES (Ahora con Horas Extra)
 // ==========================================
 app.get("/api/records/:id", async (req, res) => {
   const { id } = req.params;
@@ -116,7 +116,8 @@ app.get("/api/records/:id", async (req, res) => {
   if (error || !data) return res.json([]);
   
   const formateado = data.map(r => ({
-    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, worksite_name: r.sedes?.nombre || 'Sede desconocida'
+    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, worksite_name: r.sedes?.nombre || 'Sede desconocida',
+    minutos_extra: r.minutos_extra, estado_extra: r.estado_extra // Nuevos campos
   }));
   res.json(formateado);
 });
@@ -126,7 +127,8 @@ app.get("/api/admin/records", async (req, res) => {
   if (error || !data) return res.json([]);
   
   const formateado = data.map(r => ({
-    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida'
+    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida',
+    minutos_extra: r.minutos_extra, estado_extra: r.estado_extra // Nuevos campos
   }));
   res.json(formateado);
 });
@@ -135,7 +137,16 @@ app.post("/api/clock", async (req, res) => {
   try {
     const tipoTraducido = req.body.type === 'IN' ? 'Entrada Jornada' : 'Salida Jornada';
     const nuevoFichajeEspañol = {
-      empleado_id: req.body.user_id, sede_id: req.body.worksite_id, tipo: tipoTraducido, latitud: req.body.latitude, longitud: req.body.longitude, distancia_metros: req.body.distance, notes: req.body.notes || '', fecha_hora: new Date().toISOString()
+      empleado_id: req.body.user_id, 
+      sede_id: req.body.worksite_id, 
+      tipo: tipoTraducido, 
+      latitud: req.body.latitude, 
+      longitud: req.body.longitude, 
+      distancia_metros: req.body.distance, 
+      notes: req.body.notes || '', 
+      fecha_hora: new Date().toISOString(),
+      minutos_extra: req.body.minutos_extra || 0,        // Si hay extras, los guarda
+      estado_extra: req.body.estado_extra || 'N/A'       // PENDIENTE, APROBADO o RECHAZADO
     };
     const { data, error } = await supabase.from('fichajes').insert([nuevoFichajeEspañol]).select();
     if (error) return res.status(400).json({ error: error.message });
@@ -154,7 +165,7 @@ app.get("/api/status/:id", async (req, res) => {
 });
 
 // ==========================================
-// 5. ESTADÍSTICAS (STATS) - Inteligencia Real
+// 5. ESTADÍSTICAS (STATS)
 // ==========================================
 app.get("/api/admin/stats", async (req, res) => {
   try {
@@ -179,7 +190,9 @@ app.get("/api/admin/stats", async (req, res) => {
       }
     });
     const horasHoy = (totalMs / 3600000).toFixed(1);
-    const alertas = (fichajesHoy || []).filter(f => f.distancia_metros > 100).length;
+    
+    // Contar Alertas de distancia o Horas extra pendientes
+    const alertas = (fichajesHoy || []).filter(f => f.distancia_metros > 100 || f.estado_extra === 'PENDIENTE').length;
 
     res.json({ activeEmployees: users?.length || 0, totalHoursToday: horasHoy, pendingAlerts: alertas });
   } catch (err) {
@@ -194,9 +207,7 @@ app.post("/api/users/change-password", async (req, res) => {
   try {
     const { id, oldPassword, newPassword } = req.body;
     const { data: user } = await supabase.from('users').select('password').eq('id', id).single();
-    if (!user || user.password !== oldPassword) {
-      return res.status(400).json({ error: "La contraseña actual es incorrecta" });
-    }
+    if (!user || user.password !== oldPassword) return res.status(400).json({ error: "La contraseña actual es incorrecta" });
     const { error } = await supabase.from('users').update({ password: newPassword }).eq('id', id);
     if (error) throw error;
     res.json({ success: true });
@@ -216,12 +227,16 @@ app.post("/api/users/update", async (req, res) => {
   }
 });
 
+// Leer Solicitudes Pendientes (Fuera de rango O Horas Extra pendientes)
 app.get("/api/admin/pending-records", async (req, res) => {
   try {
-    const { data, error } = await supabase.from('fichajes').select('*, users(name), sedes(nombre)').gt('distancia_metros', 100).order('fecha_hora', { ascending: false });
+    const { data, error } = await supabase.from('fichajes').select('*, users(name), sedes(nombre)')
+      .or('distancia_metros.gt.100,estado_extra.eq.PENDIENTE')
+      .order('fecha_hora', { ascending: false });
     if (error || !data) return res.json([]);
     const formateado = data.map(r => ({
-      id: r.id, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', timestamp: r.fecha_hora, notes: r.notes || 'Fichaje fuera de rango', is_manual: false
+      id: r.id, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', timestamp: r.fecha_hora, notes: r.notes || 'Revisión requerida', is_manual: false,
+      minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
     }));
     res.json(formateado);
   } catch (err) {
@@ -233,9 +248,11 @@ app.post("/api/admin/records/approve", async (req, res) => {
   try {
     const { id, status } = req.body;
     if (status === 'REJECTED') {
-      await supabase.from('fichajes').delete().eq('id', id);
+      // Rechazar borra el registro si es un error de GPS, o quita las horas extra
+      await supabase.from('fichajes').update({ estado_extra: 'RECHAZADO', minutos_extra: 0 }).eq('id', id);
     } else {
-      await supabase.from('fichajes').update({ distancia_metros: 0, notes: 'Aprobado por el Administrador' }).eq('id', id);
+      // Aprobar perdona la distancia de GPS y aprueba las horas extra
+      await supabase.from('fichajes').update({ distancia_metros: 0, estado_extra: 'APROBADO', notes: 'Aprobado por el Administrador' }).eq('id', id);
     }
     res.json({ success: true });
   } catch (err) {
@@ -244,7 +261,7 @@ app.post("/api/admin/records/approve", async (req, res) => {
 });
 
 // ==========================================
-// 7. SALVAVIDAS FINAL Y EXPORTACIÓN
+// 7. SALVAVIDAS FINAL
 // ==========================================
 app.use((req, res) => {
   if (req.method === 'GET') return res.json([]);

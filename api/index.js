@@ -235,14 +235,17 @@ app.get("/api/admin/pending-records", async (req, res) => {
       .order('fecha_hora', { ascending: false });
     if (error || !data) return res.json([]);
     const formateado = data.map(r => ({
-      id: r.id, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', timestamp: r.fecha_hora, notes: r.notes || 'Revisión requerida', is_manual: false,
-      minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
-    }));
-    res.json(formateado);
-  } catch (err) {
-    res.json([]);
-  }
-});
+  id: r.id, 
+  user_name: r.users?.name || 'Usuario desconocido', 
+  worksite_name: r.sedes?.nombre || 'Sede desconocida', 
+  type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', 
+  timestamp: r.fecha_hora, 
+  notes: r.notes || 'Revisión requerida', 
+  is_manual: false,
+  distance: r.distancia_metros, // <--- ESTA LÍNEA ES VITAL (Usar distance)
+  minutos_extra: r.minutos_extra, 
+  estado_extra: r.estado_extra
+}));
 
 app.post("/api/admin/records/approve", async (req, res) => {
   try {

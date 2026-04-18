@@ -1229,7 +1229,12 @@ requests.map(req => (
                 <p className="text-xs text-slate-500">{req.worksite_name} • {new Date(req.timestamp).toLocaleString()}</p>
               </div>
               <div className="flex flex-col gap-1 items-end">
-                {req.distancia_metros > 100 && <span className="text-red-500 font-black text-[10px] bg-red-500/10 px-2 py-1 rounded">FUERA RANGO</span>}
+                <div className="flex flex-col gap-1 items-end">
+  {/* Cambiamos distancia_metros por distance */}
+  {req.distance > 100 && <span className="text-red-500 font-black text-[10px] bg-red-500/10 px-2 py-1 rounded">FUERA RANGO</span>}
+  
+  {req.estado_extra === 'PENDIENTE' && <span className="text-orange-500 font-black text-[10px] bg-orange-500/10 px-2 py-1 rounded">+{req.minutos_extra} MIN EXTRAS</span>}
+</div>
                 {req.estado_extra === 'PENDIENTE' && <span className="text-orange-500 font-black text-[10px] bg-orange-500/10 px-2 py-1 rounded">+{req.minutos_extra} MIN EXTRAS</span>}
               </div>
             </div>

@@ -545,7 +545,6 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
         </div>
         <p className="text-xs text-slate-500">Objetivo: 40h 00m</p>
       </section>
-
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="font-semibold text-slate-300">Actividad reciente</h3>

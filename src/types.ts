@@ -5,8 +5,7 @@ export interface User {
   password?: string;
   employee_id: string;
   department: string;
-  role: 'USER' | 'ADMIN';
-  // NUEVOS CAMPOS DE HORARIO (El interrogante ? significa que son opcionales por si hay usuarios antiguos que no lo tienen)
+  role: 'USER' | 'ADMIN'; // <--- ESTA ES LA LÍNEA QUE VERCEL ECHABA DE MENOS
   horario_manana_inicio?: string;
   horario_manana_fin?: string;
   horario_tarde_inicio?: string;
@@ -35,12 +34,10 @@ export interface Record {
   user_name?: string;
   worksite_name?: string;
   is_manual?: boolean;
-  // NUEVOS CAMPOS DE HORAS EXTRA
   minutos_extra?: number;
   estado_extra?: string;
 }
 
-// Hooks y utilidades (Mantenemos lo que ya tenías)
 import { useState, useEffect } from 'react';
 
 export function useGeolocation() {

@@ -50,7 +50,10 @@ export function useGeolocation() {
       return;
     }
     const watchId = navigator.geolocation.watchPosition(
-      (position) => { setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }); setError(null); },
+      (position) => {
+        setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        setError(null);
+      },
       (err) => { setError(err.message); },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );

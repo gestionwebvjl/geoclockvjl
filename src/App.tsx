@@ -399,43 +399,61 @@ export default function App() {
              <motion.div key="detail" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col"><RecordDetailView record={selectedRecord} user={user} onBack={() => setSelectedRecord(null)} /></motion.div>
           ) : (
              <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
-               {user.role === 'ADMIN' ? (
+               {user?.role === 'ADMIN' ? (
                  <>
                    {activeTab === 'admin-dashboard' && <AdminDashboard records={allRecords} users={adminUsers} stats={adminStats || { activeEmployees: 0, totalHoursToday: 0, pendingAlerts: 0 }} onViewRequests={() => setActiveTab('admin-requests')} onNavigate={setActiveTab} />}
-                   {activeTab === 'admin-reports' && <ReportsView records={allRecords} users={adminUsers} onBack={() => setActiveTab('admin-dashboard')} />}
-                   {activeTab === 'admin-users' && <UserManagementView users={adminUsers} onBack={() => setActiveTab('admin-dashboard')} onAdd={async(d:any)=>{await fetch('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onUpdate={async(id:any,d:any)=>{await fetch(`/api/admin/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onDelete={async(id:any)=>{if(confirm('¿Borrar?')){await fetch(`/api/admin/users/${id}`,{method:'DELETE'});fetchAdminData();}}} />}
-                   {activeTab === 'admin-worksites' && <WorksiteManagementView worksites={adminWorksites} onBack={() => setActiveTab('admin-dashboard')} onAdd={async(d:any)=>{await fetch('/api/admin/worksites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onUpdate={async(id:any,d:any)=>{await fetch(`/api/admin/worksites/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onDelete={async(id:any)=>{if(confirm('¿Borrar?')){await fetch(`/api/admin/worksites/${id}`,{method:'DELETE'});fetchAdminData();}}} />}
                    {activeTab === 'admin-records' && <AdminRecordsListView records={allRecords} users={adminUsers} onSelectRecord={setSelectedRecord} onBack={() => setActiveTab('admin-dashboard')} />}
-                   {activeTab === 'admin-export' && <ExportView records={allRecords} showToast={(m:string,t:any)=>setToast({message:m,type:t})} onBack={() => setActiveTab('admin-dashboard')} />}
-                   {activeTab === 'admin-requests' && <PendingRequestsView requests={pendingReqs} onSelectRecord={setSelectedRecord} onBack={() => setActiveTab('admin-dashboard')} onActionComplete={async(id:any,status:any)=>{await fetch('/api/admin/records/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});fetchAdminData();}} />}
-                   {activeTab === 'admin-clockin' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
-                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
+                   {activeTab === 'admin-users' && <UserManagementView users={adminUsers} onUpdateStatus={handleUpdateUserStatus} onAdd={handleAddUser} onUpdate={handleUpdateUser} onDelete={handleDeleteUser} onBack={() => setActiveTab('admin-dashboard')} />}
+                   {activeTab === 'admin-worksites' && <WorksiteManagementView worksites={adminWorksites} onAdd={handleAddWorksite} onUpdate={handleUpdateWorksite} onDelete={handleDeleteWorksite} onBack={() => setActiveTab('admin-dashboard')} />}
+                   {activeTab === 'admin-requests' && <PendingRequestsView onBack={() => setActiveTab('admin-dashboard')} onActionComplete={fetchAdminData} onSelectRecord={setSelectedRecord} />}
+                   {activeTab === 'admin-reports' && <ReportsView records={allRecords} users={adminUsers} onBack={() => setActiveTab('admin-dashboard')} />}
+                   {activeTab === 'admin-export' && <ExportView records={allRecords} showToast={showToast} onBack={() => setActiveTab('admin-dashboard')} />}
+                   {activeTab === 'admin-clockin' && (
+                     isClockedIn ? (
+                       <ActiveSession 
+                         user={user} 
+                         startTime={startTime!} 
+                         onFinish={handleClockOut} 
+                         onDiscard={async () => {
+                           if (user) {
+                             const res = await fetch(`/api/records/discard/${user.id}`, { method: 'POST' });
+                             if (res.ok) {
+                               setIsClockedIn(false);
+                               setStartTime(null);
+                               fetch(`/api/records/${user.id}`).then(res => res.json()).then(setUserRecords);
+                             }
+                           }
+                         }}
+                       />
+                     ) : (
+                       <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />
+                     )
+                   )}
+                   {activeTab === 'profile' && (
+                     <div className="p-8 space-y-8">
+                       <div className="flex flex-col items-center space-y-4">
+                         <div className="relative">
+                           <div className="w-32 h-32 rounded-full bg-slate-800 border-4 border-slate-900 shadow-xl overflow-hidden">
+                             <img src={`https://picsum.photos/seed/${user.id}/200`} alt="Profile" className="w-full h-full object-cover" />
+                           </div>
+                         </div>
+                         <div className="text-center">
+                           <h2 className="text-2xl font-bold">{user.name}</h2>
+                           <p className="text-[#ff8c00] font-medium">Administrador</p>
+                         </div>
+                       </div>
+                       <div className="pt-8">
+                         <button onClick={() => setUser(null)} className="w-full flex items-center gap-4 p-4 bg-red-500/5 rounded-xl border border-red-500/10 text-red-400 hover:bg-red-500/10 transition-all">
+                           <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                             <LogOut className="w-5 h-5" />
+                           </div>
+                           <span className="font-bold">Cerrar Sesión</span>
+                         </button>
+                       </div>
+                     </div>
+                   )}
                  </>
                ) : (
-                 <>
-                   {activeTab === 'home' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
-                   {activeTab === 'history' && <HistoryView records={userRecords} user={user} onSelectRecord={setSelectedRecord} />}
-                   {activeTab === 'summary' && <WeeklySummaryView records={userRecords} user={user} showToast={(m,t)=>setToast({message:m,type:t})} />}
-                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
-                 </>
-               )}
-             </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-
-      {!selectedRecord && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-2 pb-6 pt-3 flex justify-between items-center z-50">
-          {user.role === 'ADMIN' ? (
-            <>
-              <button onClick={() => setActiveTab('admin-dashboard')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'admin-dashboard' ? 'text-[#ff8c00] scale-110' : 'text-slate-600 hover:text-slate-400'}`}><LayoutDashboard className="w-6 h-6" /><span className="text-[9px] font-bold uppercase">Panel</span></button>
-              <button onClick={() => setActiveTab('admin-records')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'admin-records' ? 'text-[#ff8c00] scale-110' : 'text-slate-600 hover:text-slate-400'}`}><FileText className="w-6 h-6" /><span className="text-[9px] font-bold uppercase">Logs</span></button>
-              <button onClick={() => setActiveTab('admin-clockin')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'admin-clockin' ? 'text-[#ff8c00] scale-110' : 'text-slate-600 hover:text-slate-400'}`}><Fingerprint className="w-6 h-6" /><span className="text-[9px] font-bold uppercase">Fichar</span></button>
-              <button onClick={() => setActiveTab('admin-users')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'admin-users' ? 'text-[#ff8c00] scale-110' : 'text-slate-600 hover:text-slate-400'}`}><Users className="w-6 h-6" /><span className="text-[9px] font-bold uppercase">Staff</span></button>
-              <button onClick={() => setActiveTab('admin-worksites')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'admin-worksites' ? 'text-[#ff8c00] scale-110' : 'text-slate-600 hover:text-slate-400'}`}><Building2 className="w-6 h-6" /><span className="text-[9px] font-bold uppercase">Sedes</span></button>
-              <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'profile' ? 'text-[#ff8c00] scale-110' : 'text-slate-600 hover:text-slate-400'}`}><Settings2 className="w-6 h-6" /><span className="text-[9px] font-bold uppercase">Ajustes</span></button>
-            </>
-          ) : (
             <>
               <button onClick={() => setActiveTab('home')} className={`flex-1 flex flex-col items-center gap-1 transition-colors ${activeTab === 'home' ? 'text-[#ff8c00]' : 'text-slate-500'}`}><Home className="w-6 h-6" /><span className="text-[10px] font-bold uppercase">Inicio</span></button>
               <button onClick={() => setActiveTab('history')} className={`flex-1 flex flex-col items-center gap-1 transition-colors ${activeTab === 'history' ? 'text-[#ff8c00]' : 'text-slate-500'}`}><FileText className="w-6 h-6" /><span className="text-[10px] font-bold uppercase">Registros</span></button>

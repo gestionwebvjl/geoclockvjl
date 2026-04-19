@@ -102,36 +102,26 @@ app.get("/api/records/:id", async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase.from('fichajes').select('*, sedes(nombre)').eq('empleado_id', id).order('fecha_hora', { ascending: false });
   if (error || !data) return res.json([]);
-  const formateado = data.map(r => ({
-    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, worksite_name: r.sedes?.nombre || 'Sede desconocida',
-    minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
-  }));
-  res.json(formateado);
+  res.json(data.map(r => ({
+    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, worksite_name: r.sedes?.nombre || 'Sede desconocida', minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
+  })));
 });
 
 app.get("/api/admin/records", async (req, res) => {
   const { data, error } = await supabase.from('fichajes').select('*, users(name), sedes(nombre)').order('fecha_hora', { ascending: false });
   if (error || !data) return res.json([]);
-  const formateado = data.map(r => ({
-    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida',
-    minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
-  }));
-  res.json(formateado);
+  res.json(data.map(r => ({
+    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
+  })));
 });
 
 app.post("/api/clock", async (req, res) => {
   try {
-    const tipoTraducido = req.body.type === 'IN' ? 'Entrada Jornada' : 'Salida Jornada';
-    const nuevoFichajeEspañol = {
-      empleado_id: req.body.user_id, sede_id: req.body.worksite_id, tipo: tipoTraducido, latitud: req.body.latitude, longitud: req.body.longitude, distancia_metros: req.body.distance, notes: req.body.notes || '', fecha_hora: new Date().toISOString(),
-      minutos_extra: req.body.minutos_extra || 0, estado_extra: req.body.estado_extra || 'N/A'
-    };
-    const { data, error } = await supabase.from('fichajes').insert([nuevoFichajeEspañol]).select();
+    const nuevo = { empleado_id: req.body.user_id, sede_id: req.body.worksite_id, tipo: req.body.type === 'IN' ? 'Entrada Jornada' : 'Salida Jornada', latitud: req.body.latitude, longitud: req.body.longitude, distancia_metros: req.body.distance, notes: req.body.notes || '', fecha_hora: new Date().toISOString(), minutos_extra: req.body.minutos_extra || 0, estado_extra: req.body.estado_extra || 'N/A' };
+    const { data, error } = await supabase.from('fichajes').insert([nuevo]).select();
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json(data[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get("/api/status/:id", async (req, res) => {
@@ -149,74 +139,29 @@ app.get("/api/admin/stats", async (req, res) => {
     (fichajesHoy || []).forEach(f => { if (!porEmpleado[f.empleado_id]) porEmpleado[f.empleado_id] = []; porEmpleado[f.empleado_id].push(f); });
     Object.values(porEmpleado).forEach(fichajes => {
       fichajes.sort((a, b) => new Date(a.fecha_hora).getTime() - new Date(b.fecha_hora).getTime());
-      for (let i = 0; i < fichajes.length - 1; i++) {
-        if (fichajes[i].tipo === 'Entrada Jornada' && fichajes[i+1].tipo === 'Salida Jornada') {
-          totalMs += new Date(fichajes[i+1].fecha_hora).getTime() - new Date(fichajes[i].fecha_hora).getTime(); i++; 
-        }
-      }
+      for (let i = 0; i < fichajes.length - 1; i++) { if (fichajes[i].tipo === 'Entrada Jornada' && fichajes[i+1].tipo === 'Salida Jornada') { totalMs += new Date(fichajes[i+1].fecha_hora).getTime() - new Date(fichajes[i].fecha_hora).getTime(); i++; } }
     });
     const horasHoy = (totalMs / 3600000).toFixed(1);
     const alertas = (fichajesHoy || []).filter(f => f.distancia_metros > 100 || f.estado_extra === 'PENDIENTE').length;
     res.json({ activeEmployees: users?.length || 0, totalHoursToday: horasHoy, pendingAlerts: alertas });
-  } catch (err) {
-    res.json({ activeEmployees: 0, totalHoursToday: "0.0", pendingAlerts: 0 });
-  }
-});
-
-app.post("/api/users/change-password", async (req, res) => {
-  try {
-    const { id, oldPassword, newPassword } = req.body;
-    const { data: user } = await supabase.from('users').select('password').eq('id', id).single();
-    if (!user || user.password !== oldPassword) return res.status(400).json({ error: "La contraseña actual es incorrecta" });
-    const { error } = await supabase.from('users').update({ password: newPassword }).eq('id', id);
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post("/api/users/update", async (req, res) => {
-  try {
-    const { id, name, department } = req.body;
-    const { data, error } = await supabase.from('users').update({ name, department }).eq('id', id).select();
-    if (error) throw error;
-    res.json(data[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.json({ activeEmployees: 0, totalHoursToday: "0.0", pendingAlerts: 0 }); }
 });
 
 app.get("/api/admin/pending-records", async (req, res) => {
   try {
     const { data, error } = await supabase.from('fichajes').select('*, users(name), sedes(nombre)').or('distancia_metros.gt.100,estado_extra.eq.PENDIENTE').order('fecha_hora', { ascending: false });
     if (error || !data) return res.json([]);
-    const formateado = data.map(r => ({
-      id: r.id, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', timestamp: r.fecha_hora, notes: r.notes || 'Revisión requerida', is_manual: false, distance: r.distancia_metros, minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
-    }));
-    res.json(formateado);
-  } catch (err) {
-    res.json([]);
-  }
+    res.json(data.map(r => ({ id: r.id, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', timestamp: r.fecha_hora, distance: r.distancia_metros, minutos_extra: r.minutos_extra, estado_extra: r.estado_extra })));
+  } catch (err) { res.json([]); }
 });
 
 app.post("/api/admin/records/approve", async (req, res) => {
   try {
     const { id, status } = req.body;
-    if (status === 'REJECTED') {
-      await supabase.from('fichajes').update({ estado_extra: 'RECHAZADO', minutos_extra: 0 }).eq('id', id);
-    } else {
-      await supabase.from('fichajes').update({ distancia_metros: 0, estado_extra: 'APROBADO', notes: 'Aprobado por el Administrador' }).eq('id', id);
-    }
+    if (status === 'REJECTED') await supabase.from('fichajes').update({ estado_extra: 'RECHAZADO', minutos_extra: 0 }).eq('id', id);
+    else await supabase.from('fichajes').update({ distancia_metros: 0, estado_extra: 'APROBADO', notes: 'Aprobado por el Administrador' }).eq('id', id);
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.use((req, res) => {
-  if (req.method === 'GET') return res.json([]);
-  res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 export default app;

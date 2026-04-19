@@ -21,7 +21,7 @@ export interface Worksite {
   radius: number;
 }
 
-export interface TimeRecord {
+export interface Record {
   id: number;
   user_id: number;
   worksite_id: number;
@@ -50,16 +50,8 @@ export function useGeolocation() {
       return;
     }
     const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
-        setError(null);
-      },
-      (err) => {
-        setError(err.message);
-      },
+      (position) => { setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }); setError(null); },
+      (err) => { setError(err.message); },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
     return () => navigator.geolocation.clearWatch(watchId);

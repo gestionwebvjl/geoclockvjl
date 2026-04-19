@@ -201,7 +201,7 @@ app.get("/api/admin/stats", async (req, res) => {
 });
 
 // ==========================================
-// 6. PERFIL Y SOLICITUDES
+// 6. PERFIL Y SOLICITUDES PENDIENTES
 // ==========================================
 app.post("/api/users/change-password", async (req, res) => {
   try {
@@ -227,7 +227,7 @@ app.post("/api/users/update", async (req, res) => {
   }
 });
 
-// Leer Solicitudes Pendientes (Fuera de rango O Horas Extra pendientes)
+// Leer Solicitudes Pendientes
 app.get("/api/admin/pending-records", async (req, res) => {
   try {
     const { data, error } = await supabase.from('fichajes').select('*, users(name), sedes(nombre)')
@@ -235,26 +235,29 @@ app.get("/api/admin/pending-records", async (req, res) => {
       .order('fecha_hora', { ascending: false });
     if (error || !data) return res.json([]);
     const formateado = data.map(r => ({
-  id: r.id, 
-  user_name: r.users?.name || 'Usuario desconocido', 
-  worksite_name: r.sedes?.nombre || 'Sede desconocida', 
-  type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', 
-  timestamp: r.fecha_hora, 
-  notes: r.notes || 'Revisión requerida', 
-  is_manual: false,
-  distance: r.distancia_metros, // <--- ESTA LÍNEA ES VITAL (Usar distance)
-  minutos_extra: r.minutos_extra, 
-  estado_extra: r.estado_extra
-}));
+      id: r.id, 
+      user_name: r.users?.name || 'Usuario desconocido', 
+      worksite_name: r.sedes?.nombre || 'Sede desconocida', 
+      type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', 
+      timestamp: r.fecha_hora, 
+      notes: r.notes || 'Revisión requerida', 
+      is_manual: false,
+      distance: r.distancia_metros, 
+      minutos_extra: r.minutos_extra, 
+      estado_extra: r.estado_extra
+    }));
+    res.json(formateado); // ¡Aquí faltaba esto!
+  } catch (err) {
+    res.json([]);
+  }
+});
 
 app.post("/api/admin/records/approve", async (req, res) => {
   try {
     const { id, status } = req.body;
     if (status === 'REJECTED') {
-      // Rechazar borra el registro si es un error de GPS, o quita las horas extra
       await supabase.from('fichajes').update({ estado_extra: 'RECHAZADO', minutos_extra: 0 }).eq('id', id);
     } else {
-      // Aprobar perdona la distancia de GPS y aprueba las horas extra
       await supabase.from('fichajes').update({ distancia_metros: 0, estado_extra: 'APROBADO', notes: 'Aprobado por el Administrador' }).eq('id', id);
     }
     res.json({ success: true });

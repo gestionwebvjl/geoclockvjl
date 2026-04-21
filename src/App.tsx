@@ -104,20 +104,53 @@ const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
 };
 
 const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (worksiteId: number) => void, records: Record[] }) => {
-  const [worksites, setWorksites] = useState<Worksite[]>([]); const [selectedWorksite, setSelectedWorksite] = useState<number>(0);
-  const { location, error: geoError } = useGeolocation(); const [distance, setDistance] = useState<number | null>(null); const [currentTime, setCurrentTime] = useState(new Date());
+  const [worksites, setWorksites] = useState<Worksite[]>([]);
+  const [selectedWorksite, setSelectedWorksite] = useState<number>(0);
+  const { location, error: geoError } = useGeolocation();
+  const [distance, setDistance] = useState<number | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const stats = useMemo(() => {
-    const today = new Date().toDateString(); const todayRecords = records.filter(r => new Date(r.timestamp).toDateString() === today);
-    let todayMs = 0; const sortedToday = [...todayRecords].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    for (let i = 0; i < sortedToday.length; i++) { if (sortedToday[i].type === 'IN' && sortedToday[i+1]?.type === 'OUT') { todayMs += new Date(sortedToday[i+1].timestamp).getTime() - new Date(sortedToday[i].timestamp).getTime(); i++; } }
-    const now = new Date(); const day = now.getDay(); const diff = now.getDate() - day + (day === 0 ? -6 : 1); const monday = new Date(now.setDate(diff)); monday.setHours(0, 0, 0, 0);
-    const weekRecords = records.filter(r => new Date(r.timestamp) >= monday);
-    let weekMs = 0; const sortedWeek = [...weekRecords].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    for (let i = 0; i < sortedWeek.length; i++) { if (sortedWeek[i].type === 'IN' && sortedWeek[i+1]?.type === 'OUT') { weekMs += new Date(sortedWeek[i+1].timestamp).getTime() - new Date(sortedWeek[i].timestamp).getTime(); i++; } }
+    let todayMs = 0;
+    let weekMs = 0;
+    
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(now.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+
+    const sorted = [...records].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    
+    for (let i = 0; i < sorted.length; i++) {
+      if (sorted[i].type === 'IN') {
+        let nextOutIdx = -1;
+        for (let j = i + 1; j < sorted.length; j++) {
+          if (sorted[j].type === 'OUT') { nextOutIdx = j; break; }
+          else if (sorted[j].type === 'IN') break;
+        }
+        if (nextOutIdx !== -1) {
+          const diffMs = new Date(sorted[nextOutIdx].timestamp).getTime() - new Date(sorted[i].timestamp).getTime();
+          const outDateStr = new Date(sorted[nextOutIdx].timestamp).toDateString();
+          const outTime = new Date(sorted[nextOutIdx].timestamp);
+          
+          if (outDateStr === todayStr) todayMs += diffMs;
+          if (outTime >= monday) weekMs += diffMs;
+          
+          i = nextOutIdx;
+        }
+      }
+    }
+
+    const tH = Math.floor(todayMs / 3600000);
+    const tM = Math.floor((todayMs % 3600000) / 60000);
+    const wH = Math.floor(weekMs / 3600000);
+    const wM = Math.floor((weekMs % 3600000) / 60000);
+
     return {
-      todayStr: `${Math.floor(todayMs / 3600000)}h ${Math.floor((todayMs % 3600000) / 60000)}m`,
-      weekStr: `${Math.floor(weekMs / 3600000)}h ${Math.floor((weekMs % 3600000) / 60000)}m`,
+      todayStr: `${tH}h ${tM}m`,
+      weekStr: `${wH}h ${wM}m`,
       weekPct: Math.min((weekMs / (40 * 3600000)) * 100, 100)
     };
   }, [records]);
@@ -134,28 +167,75 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
       <section className="text-center py-6">
         <p className="text-slate-400 font-medium mb-1 capitalize">{currentTime.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
         <h1 className="text-5xl font-bold tracking-tight text-white mb-4">{currentTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</h1>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-sm font-medium"><span className="w-2 h-2 rounded-full bg-slate-400"></span>Estado: No ha fichado</div>
       </section>
+
       <section className="space-y-4 px-2">
-        <div className="relative">
-          <select value={selectedWorksite} onChange={(e) => setSelectedWorksite(Number(e.target.value))} className="w-full bg-slate-900 border border-orange-500/20 text-white rounded-xl px-4 py-3 outline-none font-medium appearance-none">
-            {worksites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
-          </select>
-          <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-[#ff8c00]" />
+        <div className="space-y-2">
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Seleccionar Sede</label>
+          <div className="relative">
+            <select value={selectedWorksite} onChange={(e) => setSelectedWorksite(Number(e.target.value))} className="w-full bg-slate-900 border border-orange-500/20 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-medium">
+              {worksites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#ff8c00]"><ChevronRight className="rotate-90" /></div>
+          </div>
         </div>
-        <div className={`flex items-center gap-2 justify-center py-2 px-4 rounded-lg border ${canClockIn ? 'bg-green-500/10 border-green-500/20' : 'bg-orange-500/5 border-orange-500/10'}`}>
+        <div className={`flex items-center gap-2 justify-center py-2 px-4 rounded-lg border transition-colors ${canClockIn ? 'bg-green-500/10 border-green-500/20' : 'bg-orange-500/5 border-orange-500/10'}`}>
           <MapPin className={`w-4 h-4 ${canClockIn ? 'text-green-500' : 'text-[#ff8c00]'}`} />
-          <p className={`text-xs font-medium ${canClockIn ? 'text-green-500' : 'text-slate-400'}`}>{canClockIn ? `¡Estás a ${distance?.toFixed(1)}m! Puedes fichar.` : `Acércate a la sede (Estás a ${distance !== null ? distance.toFixed(1) : '?'}m)`}</p>
+          <p className={`text-xs font-medium ${canClockIn ? 'text-green-500' : 'text-slate-400'}`}>{canClockIn ? `¡Estás en la sede (a ${distance?.toFixed(1)}m)! Puedes fichar.` : `Solo disponible a menos de ${currentSite?.radius || 10}m de la sede (Estás a ${distance !== null ? distance.toFixed(1) : '?'}m)`}</p>
         </div>
         {geoError && <p className="text-red-500 text-[10px] font-bold mt-2 uppercase w-full text-center">⚠️ Error GPS: {geoError}</p>}
       </section>
+
       <section className="flex justify-center pb-4">
-        <button disabled={!canClockIn} onClick={() => onClockIn(selectedWorksite)} className={`w-full max-w-xs aspect-square rounded-full shadow-xl flex flex-col items-center justify-center text-white transition-all ${canClockIn ? 'bg-[#ff8c00] hover:bg-orange-600 cursor-pointer' : 'bg-slate-800 cursor-not-allowed'}`}>
-          <Fingerprint className="w-16 h-16 mb-2" /><span className="text-xl font-bold uppercase">Fichar Entrada</span>
+        <button disabled={!canClockIn} onClick={() => onClockIn(selectedWorksite)} className={`w-full max-w-xs aspect-square rounded-full shadow-xl flex flex-col items-center justify-center text-white transition-all active:scale-95 group ${canClockIn ? 'bg-[#ff8c00] hover:bg-orange-600 shadow-orange-500/20 cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'}`}>
+          <Fingerprint className={`w-16 h-16 mb-2 transition-transform ${canClockIn ? 'group-hover:scale-110' : ''}`} />
+          <span className="text-xl font-bold uppercase tracking-wider">Fichar Entrada</span>
         </button>
       </section>
+
       <section className="grid grid-cols-2 gap-4">
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800"><p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Horas Hoy</p><p className="text-2xl font-black text-white">{stats.todayStr}</p></div>
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800"><p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Esta Semana</p><p className="text-2xl font-black text-[#ff8c00]">{stats.weekStr}</p></div>
+        <div className="bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Horas Hoy</p>
+          <p className="text-2xl font-black text-white">{stats.todayStr}</p>
+          <div className="flex items-center gap-1 text-green-400 text-[10px] font-bold mt-1"><TrendingUp className="w-3 h-3" /> Turno actual</div>
+        </div>
+        <div className="bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Puntualidad</p>
+          <p className="text-2xl font-black text-white">--%</p>
+          <div className="flex items-center gap-1 text-[#ff8c00] text-[10px] font-bold mt-1"><Check className="w-3 h-3" /> Sin datos</div>
+        </div>
+      </section>
+
+      <section className="bg-slate-900 rounded-xl p-5 border border-orange-500/5 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold text-slate-300">Esta semana</h3>
+          <span className="text-[#ff8c00] font-bold text-lg">{stats.weekStr}</span>
+        </div>
+        <div className="w-full bg-orange-500/10 rounded-full h-2.5 mb-2">
+          <div className="bg-[#ff8c00] h-2.5 rounded-full" style={{ width: `${stats.weekPct}%` }}></div>
+        </div>
+        <p className="text-xs text-slate-500">Objetivo: 40h 00m</p>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1"><h3 className="font-semibold text-slate-300">Actividad reciente</h3><button className="text-[#ff8c00] text-sm font-medium">Ver todo</button></div>
+        <div className="space-y-2">
+          {records.slice(0, 3).map(record => (
+            <div key={record.id} className="flex items-center justify-between bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                  {record.type === 'IN' ? <LogIn className="text-[#ff8c00] w-5 h-5" /> : <LogOut className="text-[#ff8c00] w-5 h-5" />}
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">{new Date(record.timestamp).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
+                  <p className="text-xs text-slate-500">{new Date(record.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - {record.worksite_name}</p>
+                </div>
+              </div>
+              <div className="text-right"><p className="font-bold text-sm">{record.type === 'IN' ? 'Entrada' : 'Salida'}</p></div>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

@@ -442,6 +442,51 @@ const ExportView = ({ onBack, records, showToast }: { onBack: () => void, record
     </div>
   );
 };
+const AdminDashboard = ({ records, users, stats, onViewRequests, onNavigate }: { records: Record[], users: User[], stats: any, onViewRequests: () => void, onNavigate: (tab: string) => void }) => {
+  const trendsData = useMemo(() => { const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().split('T')[0]; }); return days.map(day => { const dayRecords = records.filter(r => r.timestamp.startsWith(day)); const ins = dayRecords.filter(r => r.type === 'IN').length; return { day: day.split('-').slice(1).join('/'), fichajes: ins }; }); }, [records]);
+  const distributionData = useMemo(() => { const depts: { [key: string]: number } = {}; users.forEach(u => { const dept = u.department || 'Sin Dept'; depts[dept] = (depts[dept] || 0) + 1; }); return Object.entries(depts).map(([name, value]) => ({ name, value })); }, [users]);
+  const COLORS = ['#ff8c00', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  return (
+    <div className="flex-1 p-6 space-y-6 font-['Quicksand'] overflow-y-auto pb-24">
+      <section className="space-y-4">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Resumen de la Empresa</h3>
+        <div onClick={() => onNavigate('admin-records')} className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-3xl shadow-xl shadow-orange-500/20 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Clock className="w-32 h-32" /></div>
+          <div className="relative z-10"><div className="flex items-center justify-between mb-8"><div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md"><Clock className="w-6 h-6 text-white" /></div><span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold text-white backdrop-blur-md uppercase tracking-wider">En Vivo</span></div><p className="text-5xl font-black text-white mb-1">{stats.activeEmployees}</p><p className="text-white/80 font-bold text-sm">Empleados Registrados</p></div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div onClick={() => onNavigate('admin-records')} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-orange-500/30 transition-all">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><BarChart3 className="w-16 h-16" /></div>
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4"><BarChart3 className="w-5 h-5 text-[#ff8c00]" /></div>
+            <div className="flex items-center justify-between mb-1"><p className="text-3xl font-black text-white">{stats.totalHoursToday}</p><span className="text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">+12%</span></div><p className="text-slate-500 font-bold text-xs">Total de Horas Hoy</p>
+          </div>
+          <div onClick={onViewRequests} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-orange-500/30 transition-all">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><AlertTriangle className="w-16 h-16" /></div>
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4"><AlertTriangle className="w-5 h-5 text-[#ff8c00]" /></div>
+            <div className="flex items-center justify-between mb-1"><p className="text-3xl font-black text-white">{stats.pendingAlerts}</p><span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">Requerida</span></div><p className="text-slate-500 font-bold text-xs">Alertas Pendientes</p>
+          </div>
+        </div>
+        {stats.pendingAlerts > 0 && (
+          <div onClick={onViewRequests} className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-red-500/20 transition-all">
+            <div className="flex items-center gap-4"><div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-500" /></div><div><p className="text-sm font-bold text-white">Atención: {stats.pendingAlerts} alertas pendientes...</p><p className="text-xs text-slate-500">Requieren revisión de horas extra/GPS.</p></div></div><button className="text-red-500 font-bold text-xs uppercase tracking-widest group-hover:underline">Ver</button>
+          </div>
+        )}
+      </section>
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Tendencias de Asistencia</h3><div className="h-48 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={trendsData}><CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} /><XAxis dataKey="day" stroke="#94a3b8" fontSize={8} tickLine={false} axisLine={false} /><YAxis stroke="#94a3b8" fontSize={8} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }} itemStyle={{ color: '#ff8c00' }} /><Bar dataKey="fichajes" fill="#ff8c00" radius={[2, 2, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
+        <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Distribución por Dpto</h3><div className="h-48 w-full"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={distributionData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={5} dataKey="value">{distributionData.map((entry, index) => ( <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} /> ))}</Pie><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }} /></PieChart></ResponsiveContainer></div></div>
+      </section>
+      <section className="space-y-4">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Acceso Rápido</h3>
+        <div className="space-y-3">
+          {[ { icon: Users, label: 'Gestión de Usuarios', sub: 'Gestionar perfiles, permisos y roles', action: 'admin-users' }, { icon: Building2, label: 'Sedes y Ubicaciones', sub: 'Gestionar rangos GPS', action: 'admin-worksites' }, { icon: Download, label: 'Centro de Exportación', sub: 'Descargar CSV o PDF', action: 'admin-export' } ].map(item => (
+            <button key={item.label} type="button" onClick={() => onNavigate(item.action)} className="w-full flex items-center justify-between p-5 bg-slate-900 rounded-3xl border border-slate-800 hover:border-orange-500/20 transition-all group"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center group-hover:bg-orange-500/10 transition-colors"><item.icon className="w-6 h-6 text-slate-400 group-hover:text-[#ff8c00]" /></div><div className="text-left"><p className="font-bold text-sm">{item.label}</p><p className="text-xs text-slate-500">{item.sub}</p></div></div><ChevronRight className="w-5 h-5 text-slate-600 group-hover:translate-x-1 transition-all" /></button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);

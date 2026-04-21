@@ -318,7 +318,6 @@ const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: { reco
   const handleGeneratePDF = () => {
     const periodLabel = `Periodo: ${new Date(startDate).toLocaleDateString('es-ES')} - ${new Date(endDate).toLocaleDateString('es-ES')}`;
     let userForPdf: any = { name: 'Todos los Empleados', employee_id: 'ADMIN' };
-    
     if (selectedUserId !== 'all') {
       const foundUser = users.find(u => u.id.toString() === selectedUserId);
       if (foundUser) userForPdf = foundUser;
@@ -444,55 +443,6 @@ const ExportView = ({ onBack, records, showToast }: { onBack: () => void, record
   );
 };
 
-const AdminDashboard = ({ records, users, stats, onViewRequests, onNavigate }: { records: Record[], users: User[], stats: any, onViewRequests: () => void, onNavigate: (tab: string) => void }) => {
-  const trendsData = useMemo(() => { const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().split('T')[0]; }); return days.map(day => { const dayRecords = records.filter(r => r.timestamp.startsWith(day)); const ins = dayRecords.filter(r => r.type === 'IN').length; return { day: day.split('-').slice(1).join('/'), fichajes: ins }; }); }, [records]);
-  const distributionData = useMemo(() => { const depts: { [key: string]: number } = {}; users.forEach(u => { const dept = u.department || 'Sin Dept'; depts[dept] = (depts[dept] || 0) + 1; }); return Object.entries(depts).map(([name, value]) => ({ name, value })); }, [users]);
-  const COLORS = ['#ff8c00', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-  return (
-    <div className="flex-1 p-6 space-y-6 font-['Quicksand'] overflow-y-auto pb-24">
-      <section className="space-y-4">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Resumen de la Empresa</h3>
-        <div onClick={() => onNavigate('admin-records')} className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-3xl shadow-xl shadow-orange-500/20 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Clock className="w-32 h-32" /></div>
-          <div className="relative z-10"><div className="flex items-center justify-between mb-8"><div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md"><Clock className="w-6 h-6 text-white" /></div><span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold text-white backdrop-blur-md uppercase tracking-wider">En Vivo</span></div><p className="text-5xl font-black text-white mb-1">{stats.activeEmployees}</p><p className="text-white/80 font-bold text-sm">Empleados Registrados</p></div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div onClick={() => onNavigate('admin-records')} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-orange-500/30 transition-all">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><BarChart3 className="w-16 h-16" /></div>
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4"><BarChart3 className="w-5 h-5 text-[#ff8c00]" /></div>
-            <div className="flex items-center justify-between mb-1"><p className="text-3xl font-black text-white">{stats.totalHoursToday}</p><span className="text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">+12%</span></div><p className="text-slate-500 font-bold text-xs">Total de Horas Hoy</p>
-          </div>
-          <div onClick={onViewRequests} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-orange-500/30 transition-all">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><AlertTriangle className="w-16 h-16" /></div>
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4"><AlertTriangle className="w-5 h-5 text-[#ff8c00]" /></div>
-            <div className="flex items-center justify-between mb-1"><p className="text-3xl font-black text-white">{stats.pendingAlerts}</p><span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">Requerida</span></div><p className="text-slate-500 font-bold text-xs">Alertas Pendientes</p>
-          </div>
-        </div>
-      </section>
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Tendencias de Asistencia</h3><div className="h-48 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={trendsData}><CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} /><XAxis dataKey="day" stroke="#94a3b8" fontSize={8} tickLine={false} axisLine={false} /><YAxis stroke="#94a3b8" fontSize={8} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }} itemStyle={{ color: '#ff8c00' }} /><Bar dataKey="fichajes" fill="#ff8c00" radius={[2, 2, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
-        <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Distribución por Dpto</h3><div className="h-48 w-full"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={distributionData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={5} dataKey="value">{distributionData.map((entry, index) => ( <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} /> ))}</Pie><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '10px' }} /></PieChart></ResponsiveContainer></div></div>
-      </section>
-    </div>
-  );
-};
-
-const ReportsView = ({ records, users, onBack }: { records: Record[], users: User[], onBack: () => void }) => {
-  const trendsData = useMemo(() => { const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return d.toISOString().split('T')[0]; }); return days.map(day => { const dayRecords = records.filter(r => r.timestamp.startsWith(day)); const ins = dayRecords.filter(r => r.type === 'IN').length; return { day: day.split('-').slice(1).join('/'), fichajes: ins }; }); }, [records]);
-  const distributionData = useMemo(() => { const depts: { [key: string]: number } = {}; users.forEach(u => { const dept = u.department || 'Sin Dept'; depts[dept] = (depts[dept] || 0) + 1; }); return Object.entries(depts).map(([name, value]) => ({ name, value })); }, [users]);
-  const COLORS = ['#ff8c00', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-  return (
-    <div className="flex-1 p-6 space-y-6 font-['Quicksand'] overflow-y-auto pb-24">
-      <div className="flex items-center gap-4"><button onClick={onBack} className="p-2 hover:bg-slate-800 rounded-lg transition-colors"><ArrowLeft className="w-6 h-6" /></button><h2 className="text-2xl font-bold">Informes y Análisis</h2></div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800"><h3 className="text-lg font-bold mb-6">Tendencias de Asistencia</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={trendsData}><CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} /><XAxis dataKey="day" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} /><YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} itemStyle={{ color: '#ff8c00' }} /><Bar dataKey="fichajes" fill="#ff8c00" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
-        <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800"><h3 className="text-lg font-bold mb-6">Distribución por Departamento</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={distributionData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">{distributionData.map((entry, index) => ( <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} /> ))}</Pie><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} /><Legend verticalAlign="bottom" height={36}/></PieChart></ResponsiveContainer></div></div>
-      </div>
-      <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800"><h3 className="text-lg font-bold mb-6">Actividad por Sede</h3><div className="h-64 w-full"><ResponsiveContainer width="100%" height="100%"><LineChart data={trendsData}><CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} /><XAxis dataKey="day" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} /><YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} /><Line type="monotone" dataKey="fichajes" stroke="#ff8c00" strokeWidth={3} dot={{ fill: '#ff8c00', r: 4 }} activeDot={{ r: 6 }} /></LineChart></ResponsiveContainer></div></div>
-    </div>
-  );
-};
-
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<string>('home');
@@ -556,30 +506,40 @@ export default function App() {
       <main className="flex-1 flex flex-col overflow-y-auto">
         <AnimatePresence mode="wait">
           {selectedRecord ? (
-            <motion.div key="detail" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col"><RecordDetailView record={selectedRecord} user={user} onBack={() => setSelectedRecord(null)} /></motion.div>
+             <motion.div key="detail" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col"><RecordDetailView record={selectedRecord} user={user} onBack={() => setSelectedRecord(null)} /></motion.div>
           ) : (
-            <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
-              {user.role === 'ADMIN' ? (
-                <>
-                  {activeTab === 'admin-dashboard' && <AdminDashboard records={allRecords} users={adminUsers} stats={adminStats || { activeEmployees: 0, totalHoursToday: 0, pendingAlerts: 0 }} onViewRequests={() => setActiveTab('admin-requests')} onNavigate={setActiveTab} />}
-                  {activeTab === 'admin-records' && <AdminRecordsListView records={allRecords} users={adminUsers} onSelectRecord={setSelectedRecord} onBack={() => setActiveTab('admin-dashboard')} />}
-                  {activeTab === 'admin-users' && <UserManagementView users={adminUsers} onAdd={async(d:any)=>{await fetch('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onUpdate={async(id:any,d:any)=>{await fetch(`/api/admin/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onDelete={async(id:any)=>{if(confirm('¿Borrar?')){await fetch(`/api/admin/users/${id}`,{method:'DELETE'});fetchAdminData();}}} onBack={() => setActiveTab('admin-dashboard')} />}
-                  {activeTab === 'admin-worksites' && <WorksiteManagementView worksites={adminWorksites} onAdd={async(d:any)=>{await fetch('/api/admin/worksites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onUpdate={async(id:any,d:any)=>{await fetch(`/api/admin/worksites/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onDelete={async(id:any)=>{if(confirm('¿Borrar?')){await fetch(`/api/admin/worksites/${id}`,{method:'DELETE'});fetchAdminData();}}} onBack={() => setActiveTab('admin-dashboard')} />}
-                  {activeTab === 'admin-requests' && <PendingRequestsView requests={pendingReqs} onSelectRecord={setSelectedRecord} onBack={() => setActiveTab('admin-dashboard')} onActionComplete={async(id:any,status:any)=>{await fetch('/api/admin/records/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});fetchAdminData();}} />}
-                  {activeTab === 'admin-reports' && <ReportsView records={allRecords} users={adminUsers} onBack={() => setActiveTab('admin-dashboard')} />}
-                  {activeTab === 'admin-export' && <ExportView records={allRecords} showToast={showToast} onBack={() => setActiveTab('admin-dashboard')} />}
-                  {activeTab === 'admin-clockin' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
-                  {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
-                </>
-              ) : (
-                <>
-                  {activeTab === 'home' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
-                  {activeTab === 'history' && <HistoryView records={userRecords} user={user} onSelectRecord={setSelectedRecord} />}
-                  {activeTab === 'summary' && <WeeklySummaryView records={userRecords} user={user} showToast={showToast} onSelectRecord={setSelectedRecord} />}
-                  {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
-                </>
-              )}
-            </motion.div>
+             <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
+               {user.role === 'ADMIN' ? (
+                 <>
+                   {activeTab === 'admin-dashboard' && (
+                     <div className="p-6 space-y-6 pb-24">
+                       <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-8 rounded-3xl shadow-xl"><p className="text-5xl font-black">{adminStats.activeEmployees}</p><p className="font-bold opacity-80">Empleados Activos Ahora</p></div>
+                       <div className="grid grid-cols-2 gap-4">
+                         <button onClick={() => setActiveTab('admin-users')} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl flex flex-col items-center gap-2 hover:border-orange-500/30 transition-all"><Users className="text-[#ff8c00] w-8 h-8"/><span className="font-bold text-sm">Usuarios</span></button>
+                         <button onClick={() => setActiveTab('admin-worksites')} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl flex flex-col items-center gap-2 hover:border-orange-500/30 transition-all"><Building2 className="text-[#ff8c00] w-8 h-8"/><span className="font-bold text-sm">Sedes</span></button>
+                         <button onClick={() => setActiveTab('admin-records')} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl flex flex-col items-center gap-2 hover:border-orange-500/30 transition-all"><FileText className="text-[#ff8c00] w-8 h-8"/><span className="font-bold text-sm">Registros</span></button>
+                         <button onClick={() => setActiveTab('admin-export')} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl flex flex-col items-center gap-2 hover:border-orange-500/30 transition-all"><Download className="text-[#ff8c00] w-8 h-8"/><span className="font-bold text-sm">Exportar Datos (CSV/PDF)</span></button>
+                       </div>
+                       <button onClick={() => setActiveTab('admin-requests')} className={`w-full p-6 rounded-3xl font-bold flex justify-between items-center transition-all ${pendingReqs.length > 0 ? 'bg-orange-500/20 text-[#ff8c00] border border-orange-500/50 hover:bg-orange-500/30' : 'bg-slate-900 border border-slate-800 text-slate-500 hover:bg-slate-800'}`}><span>Revisar Alertas Extra</span><span className="bg-slate-950 px-3 py-1 rounded-full">{pendingReqs.length}</span></button>
+                     </div>
+                   )}
+                   {activeTab === 'admin-users' && <UserManagementView users={adminUsers} onBack={() => setActiveTab('admin-dashboard')} onAdd={async(d:any)=>{await fetch('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onUpdate={async(id:any,d:any)=>{await fetch(`/api/admin/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onDelete={async(id:any)=>{if(confirm('¿Borrar?')){await fetch(`/api/admin/users/${id}`,{method:'DELETE'});fetchAdminData();}}} />}
+                   {activeTab === 'admin-worksites' && <WorksiteManagementView worksites={adminWorksites} onBack={() => setActiveTab('admin-dashboard')} onAdd={async(d:any)=>{await fetch('/api/admin/worksites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onUpdate={async(id:any,d:any)=>{await fetch(`/api/admin/worksites/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});fetchAdminData();}} onDelete={async(id:any)=>{if(confirm('¿Borrar?')){await fetch(`/api/admin/worksites/${id}`,{method:'DELETE'});fetchAdminData();}}} />}
+                   {activeTab === 'admin-records' && <AdminRecordsListView records={allRecords} users={adminUsers} onSelectRecord={setSelectedRecord} onBack={() => setActiveTab('admin-dashboard')} />}
+                   {activeTab === 'admin-export' && <ExportView records={allRecords} showToast={(m:string,t:any)=>setToast({message:m,type:t})} onBack={() => setActiveTab('admin-dashboard')} />}
+                   {activeTab === 'admin-requests' && <PendingRequestsView requests={pendingReqs} onSelectRecord={setSelectedRecord} onBack={() => setActiveTab('admin-dashboard')} onActionComplete={async(id:any,status:any)=>{await fetch('/api/admin/records/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});fetchAdminData();}} />}
+                   {activeTab === 'admin-clockin' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
+                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
+                 </>
+               ) : (
+                 <>
+                   {activeTab === 'home' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
+                   {activeTab === 'history' && <HistoryView records={userRecords} user={user} onSelectRecord={setSelectedRecord} />}
+                   {activeTab === 'summary' && <WeeklySummaryView records={userRecords} user={user} showToast={(m,t)=>setToast({message:m,type:t})} />}
+                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
+                 </>
+               )}
+             </motion.div>
           )}
         </AnimatePresence>
       </main>

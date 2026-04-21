@@ -375,14 +375,71 @@ const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: { reco
   );
 };
 
-const ExportView = ({ onBack, records, showToast }: any) => {
-  const exportData = () => { generateFullReportPDF(records, { name: 'Exportación Global', employee_id: 'ADMIN' } as any); showToast('Archivo generado', 'success'); };
+const ExportView = ({ onBack, records, showToast }: { onBack: () => void, records: Record[], showToast: (msg: string, type: 'success' | 'error') => void }) => {
+  const [startDate, setStartDate] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString().split('T')[0]; });
+  const [endDate, setEndDate] = useState(() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d.toISOString().split('T')[0]; });
+  const [format, setFormat] = useState<'CSV' | 'PDF' | 'JSON'>('CSV');
+  
+  const filteredRecords = useMemo(() => { 
+    return records.filter(r => { 
+      const date = new Date(r.timestamp).toISOString().split('T')[0]; 
+      return date >= startDate && date <= endDate; 
+    }); 
+  }, [records, startDate, endDate]);
+
+  const handleExport = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (filteredRecords.length === 0) { showToast('No hay registros en el rango seleccionado', 'error'); return; }
+    try {
+      if (format === 'PDF') { 
+        generateFullReportPDF(filteredRecords, { name: 'Informe Consolidado', employee_id: 'ADMIN', department: 'Administración' } as any, `${new Date(startDate).toLocaleDateString('es-ES')} - ${new Date(endDate).toLocaleDateString('es-ES')}`); 
+      }
+      else if (format === 'CSV') {
+        const headers = ['Fecha', 'Hora', 'Tipo', 'Usuario', 'Sede', 'Distancia (m)', 'Metodo', 'Horas Extra', 'Estado Extra']; 
+        const csvData = filteredRecords.map(r => [ new Date(r.timestamp).toLocaleDateString('es-ES'), new Date(r.timestamp).toLocaleTimeString('es-ES'), r.type, r.user_name || 'N/A', r.worksite_name, r.distance, r.is_manual ? 'Manual' : 'GPS', r.minutos_extra || 0, r.estado_extra || 'N/A' ]); 
+        const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n"); 
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); 
+        const link = document.createElement("a"); 
+        link.href = URL.createObjectURL(blob); 
+        link.download = `Export_${new Date().toISOString().split('T')[0]}.csv`; 
+        link.click();
+      } else if (format === 'JSON') {
+        const blob = new Blob([JSON.stringify(filteredRecords, null, 2)], { type: 'application/json' }); 
+        const link = document.createElement("a"); 
+        link.href = URL.createObjectURL(blob); 
+        link.download = `Export_${new Date().toISOString().split('T')[0]}.json`; 
+        link.click();
+      }
+      showToast('Exportación iniciada correctamente', 'success');
+    } catch (err) { showToast('Error al generar la exportación', 'error'); }
+  };
+
   return (
-    <div className="flex-1 p-6 space-y-8 font-['Quicksand'] text-center">
-      <div className="flex items-center gap-4"><button onClick={onBack}><ArrowLeft/></button></div>
-      <Download className="w-20 h-20 mx-auto text-slate-800" />
-      <h2 className="text-2xl font-bold">Exportación de Datos</h2>
-      <button onClick={exportData} className="w-full bg-[#ff8c00] py-4 rounded-2xl font-bold">DESCARGAR PDF CONSOLIDADO</button>
+    <div className="flex-1 p-6 space-y-6 font-['Quicksand'] overflow-y-auto pb-24">
+      <div className="flex items-center gap-4"><button type="button" onClick={onBack} className="p-2 hover:bg-slate-800 rounded-lg transition-colors"><ArrowLeft className="w-6 h-6" /></button><h2 className="text-2xl font-bold">Centro de Exportación</h2></div>
+      
+      <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Rango de Fechas Global</label>
+          <div className="grid grid-cols-2 gap-4">
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-orange-500/20" />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-orange-500/20" />
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Formato de Archivo</label>
+          <div className="grid grid-cols-3 gap-4">
+            <button type="button" onClick={() => setFormat('CSV')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'CSV' ? 'border-[#ff8c00] bg-orange-500/10' : 'border-slate-700 hover:border-orange-500/50'}`}><p className="font-bold">CSV</p><p className="text-[10px] text-slate-500">Excel / Sheets</p></button>
+            <button type="button" onClick={() => setFormat('PDF')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'PDF' ? 'border-[#ff8c00] bg-orange-500/10' : 'border-slate-700 hover:border-orange-500/50'}`}><p className="font-bold">PDF</p><p className="text-[10px] text-slate-500">Lectura</p></button>
+            <button type="button" onClick={() => setFormat('JSON')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'JSON' ? 'border-[#ff8c00] bg-orange-500/10' : 'border-slate-700 hover:border-orange-500/50'}`}><p className="font-bold">JSON</p><p className="text-[10px] text-slate-500">Datos</p></button>
+          </div>
+        </div>
+        
+        <button type="button" onClick={handleExport} className="w-full bg-[#ff8c00] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+          <Download className="w-6 h-6" /> Exportar Archivo ({filteredRecords.length} logs)
+        </button>
+      </div>
     </div>
   );
 };

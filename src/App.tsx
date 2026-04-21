@@ -301,21 +301,76 @@ const PendingRequestsView = ({ onBack, onActionComplete, requests, onSelectRecor
   </div>
 );
 
-const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: any) => {
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
-  const filtered = records.filter((r:any) => r.timestamp.startsWith(filterDate));
+const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: { records: Record[], users: User[], onSelectRecord: (record: Record) => void, onBack: () => void }) => {
+  const [startDate, setStartDate] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString().split('T')[0]; });
+  const [endDate, setEndDate] = useState(() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d.toISOString().split('T')[0]; });
+  const [selectedUserId, setSelectedUserId] = useState<string>('all');
+  
+  const filteredRecords = useMemo(() => { 
+    return records.filter(r => { 
+      const recordDate = r.timestamp.split('T')[0]; 
+      const matchesDate = recordDate >= startDate && recordDate <= endDate; 
+      const matchesUser = selectedUserId === 'all' || r.user_id.toString() === selectedUserId; 
+      return matchesDate && matchesUser; 
+    }); 
+  }, [records, startDate, endDate, selectedUserId]);
+
+  const handleGeneratePDF = () => {
+    const periodLabel = `Periodo: ${new Date(startDate).toLocaleDateString('es-ES')} - ${new Date(endDate).toLocaleDateString('es-ES')}`;
+    let userForPdf: any = { name: 'Todos los Empleados', employee_id: 'ADMIN' };
+    
+    if (selectedUserId !== 'all') {
+      const foundUser = users.find(u => u.id.toString() === selectedUserId);
+      if (foundUser) userForPdf = foundUser;
+    }
+    generateFullReportPDF(filteredRecords, userForPdf, periodLabel);
+  };
+
   return (
-    <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-24">
-      <div className="flex items-center gap-4 mb-6"><button onClick={onBack}><ArrowLeft/></button><h2 className="text-2xl font-bold">Logs Diarios</h2></div>
-      <input type="date" value={filterDate} onChange={(e)=>setFilterDate(e.target.value)} className="w-full bg-slate-900 border border-slate-800 p-3 rounded-xl outline-none" />
-      <div className="space-y-2 mt-4">
-        {filtered.map((r:any) => (
-          <div key={r.id} onClick={()=>onSelectRecord(r)} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between cursor-pointer">
-            <div><p className="font-bold">{r.user_name}</p><p className="text-xs text-slate-500">{new Date(r.timestamp).toLocaleTimeString()} - {r.worksite_name}</p></div>
-            <p className={`font-black text-xs ${r.type === 'IN' ? 'text-green-500' : 'text-red-500'}`}>{r.type}</p>
+    <div className="flex-1 p-6 space-y-6 font-['Quicksand'] overflow-y-auto pb-24">
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><ArrowLeft className="w-6 h-6" /></button>
+          <h2 className="text-2xl font-bold">Registros de Empleados</h2>
+        </div>
+        <button disabled={filteredRecords.length === 0} onClick={handleGeneratePDF} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20">
+          <Download className="w-4 h-4" /> Exportar PDF
+        </button>
+      </header>
+      
+      <section className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Desde</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-orange-500/20" /></div>
+          <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Hasta</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-orange-500/20" /></div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Empleado</label>
+            <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-orange-500/20">
+              <option value="all">Todos los empleados</option>
+              {users.map(u => ( <option key={u.id} value={u.id}>{u.name}</option> ))}
+            </select>
           </div>
-        ))}
-      </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1"><h3 className="font-bold text-slate-300">Listado de Registros</h3><span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{filteredRecords.length} RESULTADOS</span></div>
+        <div className="space-y-3">
+          {filteredRecords.length === 0 ? ( <div className="text-center py-12 bg-slate-900 rounded-3xl border border-slate-800"><p className="text-slate-500 font-bold italic">No hay registros para este filtro</p></div> ) : (
+            filteredRecords.map(record => (
+              <div key={record.id} onClick={() => onSelectRecord(record)} className="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 hover:border-orange-500/20 transition-all cursor-pointer group">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${record.type === 'IN' ? 'bg-green-500/10' : 'bg-orange-500/10'}`}>{record.type === 'IN' ? <LogIn className="text-green-500 w-6 h-6" /> : <LogOut className="text-[#ff8c00] w-6 h-6" />}</div>
+                  <div>
+                    <div className="flex items-center gap-2"><p className="font-bold text-sm text-white">{record.user_name || 'Empleado'}</p><span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${record.type === 'IN' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'}`}>{record.type === 'IN' ? 'Entrada' : 'Salida'}</span></div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">{new Date(record.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(record.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-orange-500 transition-colors" />
+              </div>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 };

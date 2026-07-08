@@ -18,7 +18,7 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 
 
 const generateRecordPDF = (record: Record, user: User) => {
   const doc = new jsPDF();
-  doc.setFontSize(22); doc.setTextColor(255, 140, 0); doc.text('GeoClock - Comprobante de Registro', 20, 20);
+  doc.setFontSize(22); doc.setTextColor(255, 140, 0); doc.text('VJL Consultores - Comprobante de Registro', 20, 20);
   doc.setFontSize(12); doc.setTextColor(100); doc.text(`Generado el: ${new Date().toLocaleString('es-ES')}`, 20, 30);
   doc.setFontSize(16); doc.setTextColor(0); doc.text('Información del Empleado', 20, 45);
   doc.setFontSize(12); doc.text(`Nombre: ${record.user_name || user.name}`, 20, 55); doc.text(`Email: ${user.email}`, 20, 62); doc.text(`ID Empleado: ${user.employee_id}`, 20, 69); doc.text(`Departamento: ${user.department}`, 20, 76);
@@ -30,7 +30,7 @@ const generateRecordPDF = (record: Record, user: User) => {
 const generateFullReportPDF = (records: Record[], user: User, periodLabel?: string) => {
   if (!records || records.length === 0) return;
   const doc = new jsPDF();
-  doc.setFontSize(22); doc.setTextColor(255, 140, 0); doc.text('GeoClock - Informe de Asistencia', 20, 20);
+  doc.setFontSize(22); doc.setTextColor(255, 140, 0); doc.text('VJL Consultores - Informe de Asistencia', 20, 20);
   doc.setFontSize(12); doc.setTextColor(100);
   const isConsolidated = user.employee_id === 'ADMIN';
   doc.text(isConsolidated ? `Informe Consolidado de Administración` : `Empleado: ${user.name} (${user.employee_id})`, 20, 30);
@@ -87,7 +87,7 @@ const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-green-600/10 mb-4 border border-green-600/20">{mode === 'ADMIN' ? <Shield className="w-10 h-10 text-[#669933]" /> : <Clock className="w-10 h-10 text-[#669933]" />}</div>
-          <h1 className="text-4xl font-black text-white tracking-tight">{mode === 'ADMIN' ? 'Portal de Administración' : 'GeoClock'}</h1>
+          <h1 className="text-4xl font-black text-white tracking-tight">{mode === 'ADMIN' ? 'Portal de Administración' : 'VJL Consultores'}</h1>
         </div>
         <div className="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-xl">
           <form onSubmit={handleSubmit} className="space-y-6">

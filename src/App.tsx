@@ -86,7 +86,7 @@ const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 font-['Quicksand']">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-orange-500/10 mb-4 border border-orange-500/20">{mode === 'ADMIN' ? <Shield className="w-10 h-10 text-[#ff8c00]" /> : <Clock className="w-10 h-10 text-[#ff8c00]" />}</div>
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-green-600/10 mb-4 border border-green-600/20">{mode === 'ADMIN' ? <Shield className="w-10 h-10 text-[#ff8c00]" /> : <Clock className="w-10 h-10 text-[#ff8c00]" />}</div>
           <h1 className="text-4xl font-black text-white tracking-tight">{mode === 'ADMIN' ? 'Portal de Administración' : 'GeoClock'}</h1>
         </div>
         <div className="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-xl">
@@ -174,13 +174,13 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
         <div className="space-y-2">
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Seleccionar Sede</label>
           <div className="relative">
-            <select value={selectedWorksite} onChange={(e) => setSelectedWorksite(Number(e.target.value))} className="w-full bg-slate-900 border border-orange-500/20 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-medium">
+            <select value={selectedWorksite} onChange={(e) => setSelectedWorksite(Number(e.target.value))} className="w-full bg-slate-900 border border-green-600/20 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-green-600/50 transition-all font-medium">
               {worksites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#ff8c00]"><ChevronRight className="rotate-90" /></div>
           </div>
         </div>
-        <div className={`flex items-center gap-2 justify-center py-2 px-4 rounded-lg border transition-colors ${canClockIn ? 'bg-green-500/10 border-green-500/20' : 'bg-orange-500/5 border-orange-500/10'}`}>
+        <div className={`flex items-center gap-2 justify-center py-2 px-4 rounded-lg border transition-colors ${canClockIn ? 'bg-green-500/10 border-green-500/20' : 'bg-green-600/5 border-green-600/10'}`}>
           <MapPin className={`w-4 h-4 ${canClockIn ? 'text-green-500' : 'text-[#ff8c00]'}`} />
           <p className={`text-xs font-medium ${canClockIn ? 'text-green-500' : 'text-slate-400'}`}>{canClockIn ? `¡Estás en la sede (a ${distance?.toFixed(1)}m)! Puedes fichar.` : `Solo disponible a menos de ${currentSite?.radius || 10}m de la sede (Estás a ${distance !== null ? distance.toFixed(1) : '?'}m)`}</p>
         </div>
@@ -188,31 +188,31 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
       </section>
 
       <section className="flex justify-center pb-4">
-        <button disabled={!canClockIn} onClick={() => onClockIn(selectedWorksite)} className={`w-full max-w-xs aspect-square rounded-full shadow-xl flex flex-col items-center justify-center text-white transition-all active:scale-95 group ${canClockIn ? 'bg-[#ff8c00] hover:bg-orange-600 shadow-orange-500/20 cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'}`}>
+        <button disabled={!canClockIn} onClick={() => onClockIn(selectedWorksite)} className={`w-full max-w-xs aspect-square rounded-full shadow-xl flex flex-col items-center justify-center text-white transition-all active:scale-95 group ${canClockIn ? 'bg-[#ff8c00] hover:bg-orange-600 shadow-green-600/20 cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'}`}>
           <Fingerprint className={`w-16 h-16 mb-2 transition-transform ${canClockIn ? 'group-hover:scale-110' : ''}`} />
           <span className="text-xl font-bold uppercase tracking-wider">Fichar Entrada</span>
         </button>
       </section>
 
       <section className="grid grid-cols-2 gap-4">
-        <div className="bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
+        <div className="bg-slate-900 p-4 rounded-xl border border-green-600/5 shadow-sm">
           <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Horas Hoy</p>
           <p className="text-2xl font-black text-white">{stats.todayStr}</p>
           <div className="flex items-center gap-1 text-green-400 text-[10px] font-bold mt-1"><TrendingUp className="w-3 h-3" /> Turno actual</div>
         </div>
-        <div className="bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
+        <div className="bg-slate-900 p-4 rounded-xl border border-green-600/5 shadow-sm">
           <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Puntualidad</p>
           <p className="text-2xl font-black text-white">--%</p>
           <div className="flex items-center gap-1 text-[#ff8c00] text-[10px] font-bold mt-1"><Check className="w-3 h-3" /> Sin datos</div>
         </div>
       </section>
 
-      <section className="bg-slate-900 rounded-xl p-5 border border-orange-500/5 shadow-sm">
+      <section className="bg-slate-900 rounded-xl p-5 border border-green-600/5 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-slate-300">Esta semana</h3>
           <span className="text-[#ff8c00] font-bold text-lg">{stats.weekStr}</span>
         </div>
-        <div className="w-full bg-orange-500/10 rounded-full h-2.5 mb-2">
+        <div className="w-full bg-green-600/10 rounded-full h-2.5 mb-2">
           <div className="bg-[#ff8c00] h-2.5 rounded-full" style={{ width: `${stats.weekPct}%` }}></div>
         </div>
         <p className="text-xs text-slate-500">Objetivo: 40h 00m</p>
@@ -222,9 +222,9 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
         <div className="flex items-center justify-between px-1"><h3 className="font-semibold text-slate-300">Actividad reciente</h3><button className="text-[#ff8c00] text-sm font-medium">Ver todo</button></div>
         <div className="space-y-2">
           {records.slice(0, 3).map(record => (
-            <div key={record.id} className="flex items-center justify-between bg-slate-900 p-4 rounded-xl border border-orange-500/5 shadow-sm">
+            <div key={record.id} className="flex items-center justify-between bg-slate-900 p-4 rounded-xl border border-green-600/5 shadow-sm">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center">
                   {record.type === 'IN' ? <LogIn className="text-[#ff8c00] w-5 h-5" /> : <LogOut className="text-[#ff8c00] w-5 h-5" />}
                 </div>
                 <div>
@@ -246,7 +246,7 @@ const ActiveSession = ({ user, onFinish, onDiscard, startTime }: { user: User, o
   useEffect(() => { const interval = setInterval(() => { const diff = new Date().getTime() - startTime.getTime(); setElapsed({ h: Math.floor(diff / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) }); }, 1000); return () => clearInterval(interval); }, [startTime]);
   return (
     <div className="flex-1 overflow-y-auto px-6 py-8 font-['Quicksand'] pb-24">
-      <div className="flex justify-center mb-8"><div className="bg-orange-500/10 text-[#ff8c00] px-4 py-1.5 rounded-full flex items-center gap-2"><span className="animate-ping w-2 h-2 rounded-full bg-[#ff8c00]"></span><span className="text-xs font-semibold uppercase">TRABAJANDO ACTUALMENTE</span></div></div>
+      <div className="flex justify-center mb-8"><div className="bg-green-600/10 text-[#ff8c00] px-4 py-1.5 rounded-full flex items-center gap-2"><span className="animate-ping w-2 h-2 rounded-full bg-[#ff8c00]"></span><span className="text-xs font-semibold uppercase">TRABAJANDO ACTUALMENTE</span></div></div>
       <div className="text-center mb-8"><div className="flex justify-center items-baseline gap-2">
         <div className="flex flex-col items-center"><span className="text-6xl font-bold text-white">{elapsed.h.toString().padStart(2, '0')}</span><span className="text-[10px] text-slate-500">HORAS</span></div><span className="text-5xl font-light mb-6">:</span>
         <div className="flex flex-col items-center"><span className="text-6xl font-bold text-white">{elapsed.m.toString().padStart(2, '0')}</span><span className="text-[10px] text-slate-500">MINUTOS</span></div><span className="text-5xl font-light mb-6">:</span>
@@ -266,7 +266,7 @@ const HistoryView = ({ records, user, onSelectRecord }: { records: Record[], use
         <div key={record.id} onClick={() => onSelectRecord(record)} className={`bg-slate-900 rounded-xl border-l-4 p-4 flex justify-between cursor-pointer border border-slate-800 ${record.type === 'IN' ? 'border-l-green-500' : 'border-l-red-500'}`}>
           <div className="flex items-center gap-4">
             <div className="bg-slate-800 w-14 h-14 rounded-lg flex flex-col items-center justify-center"><span className="text-xl font-black">{new Date(record.timestamp).getDate()}</span><span className="text-[10px] text-slate-500 uppercase">{new Date(record.timestamp).toLocaleDateString('es-ES', {month:'short'})}</span></div>
-            <div><p className="font-bold">{record.type === 'IN' ? 'Entrada' : 'Salida'} {record.estado_extra === 'PENDIENTE' && <span className="text-orange-500 text-[10px] ml-2">+Extras</span>}</p><p className="text-xs text-slate-400">{new Date(record.timestamp).toLocaleTimeString()} • {record.worksite_name}</p></div>
+            <div><p className="font-bold">{record.type === 'IN' ? 'Entrada' : 'Salida'} {record.estado_extra === 'PENDIENTE' && <span className="text-green-600 text-[10px] ml-2">+Extras</span>}</p><p className="text-xs text-slate-400">{new Date(record.timestamp).toLocaleTimeString()} • {record.worksite_name}</p></div>
           </div>
           <Printer className="w-5 h-5 text-slate-500" />
         </div>
@@ -285,7 +285,7 @@ const RecordDetailView = ({ record, user, onBack }: { record: Record, user: User
         <div className="bg-slate-900 p-4 rounded-xl"><p className="text-slate-500 text-[10px] uppercase font-bold">Distancia</p><p className="font-bold">{record.distance.toFixed(1)}m</p></div>
       </div>
       {record.minutos_extra ? (
-        <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl"><p className="text-orange-500 text-[10px] uppercase font-bold">Horas Extra</p><p className="font-bold text-orange-400">+{record.minutos_extra} min ({record.estado_extra})</p></div>
+        <div className="bg-green-600/10 border border-green-600/20 p-4 rounded-xl"><p className="text-green-600 text-[10px] uppercase font-bold">Horas Extra</p><p className="font-bold text-orange-400">+{record.minutos_extra} min ({record.estado_extra})</p></div>
       ) : null}
       <div className="bg-slate-900 p-6 rounded-xl"><p className="text-slate-500 text-[10px] uppercase font-bold mb-2">Notas</p><p className="italic">"{record.notes || 'Sin notas'}"</p></div>
       <button onClick={() => generateRecordPDF(record, user)} className="w-full bg-[#ff8c00] py-4 rounded-xl font-bold flex justify-center gap-2"><Printer /> Descargar Comprobante</button>
@@ -319,12 +319,12 @@ const UserModal = ({ user, onSave, onClose }: { user?: User, onSave: (u: any) =>
           <select value={f.role} onChange={e=>setF({...f,role:e.target.value as 'USER'|'ADMIN'})} className="bg-slate-900 border border-slate-800 p-3 rounded-xl w-full"><option value="USER">Usuario</option><option value="ADMIN">Admin</option></select>
         </div>
         <div className="pt-4 border-t border-slate-800">
-          <p className="text-orange-500 font-bold mb-2">Horario Mañana</p>
+          <p className="text-green-600 font-bold mb-2">Horario Mañana</p>
           <div className="flex gap-2"><input type="time" value={f.horario_manana_inicio} onChange={e=>setF({...f,horario_manana_inicio:e.target.value})} className="bg-slate-900 border border-slate-800 p-2 rounded-xl flex-1" /><input type="time" value={f.horario_manana_fin} onChange={e=>setF({...f,horario_manana_fin:e.target.value})} className="bg-slate-900 border border-slate-800 p-2 rounded-xl flex-1" /></div>
-          <p className="text-orange-500 font-bold mt-4 mb-2">Horario Tarde</p>
+          <p className="text-green-600 font-bold mt-4 mb-2">Horario Tarde</p>
           <div className="flex gap-2"><input type="time" value={f.horario_tarde_inicio} onChange={e=>setF({...f,horario_tarde_inicio:e.target.value})} className="bg-slate-900 border border-slate-800 p-2 rounded-xl flex-1" /><input type="time" value={f.horario_tarde_fin} onChange={e=>setF({...f,horario_tarde_fin:e.target.value})} className="bg-slate-900 border border-slate-800 p-2 rounded-xl flex-1" /></div>
         </div>
-        <div className="flex gap-2 mt-4"><button onClick={()=>onSave(f)} className="flex-1 bg-orange-500 p-3 rounded-xl font-bold">Guardar</button><button onClick={onClose} className="flex-1 bg-slate-800 p-3 rounded-xl text-slate-400">Cancelar</button></div>
+        <div className="flex gap-2 mt-4"><button onClick={()=>onSave(f)} className="flex-1 bg-green-600 p-3 rounded-xl font-bold">Guardar</button><button onClick={onClose} className="flex-1 bg-slate-800 p-3 rounded-xl text-slate-400">Cancelar</button></div>
       </div>
     </div>
   );
@@ -346,8 +346,8 @@ const WorksiteModal = ({ worksite, onSave, onClose }: any) => {
       <div className="bg-slate-950 border border-slate-800 p-6 rounded-3xl w-full max-w-md space-y-4"><h3 className="text-2xl font-bold">Sede</h3>
       <input placeholder="Nombre" value={f.name} onChange={e=>setF({...f,name:e.target.value})} className="w-full bg-slate-900 border border-slate-800 p-3 rounded-xl" />
       <div className="flex gap-2"><input type="number" placeholder="Latitud" value={f.latitude} onChange={e=>setF({...f,latitude:parseFloat(e.target.value)})} className="bg-slate-900 border border-slate-800 p-3 rounded-xl w-full" /><input type="number" placeholder="Longitud" value={f.longitude} onChange={e=>setF({...f,longitude:parseFloat(e.target.value)})} className="bg-slate-900 border border-slate-800 p-3 rounded-xl w-full" /></div>
-      <p className="text-sm text-slate-400">Radio: {f.radius}m</p><input type="range" min="10" max="1000" value={f.radius} onChange={e=>setF({...f,radius:parseInt(e.target.value)})} className="w-full accent-orange-500" />
-      <div className="flex gap-2 mt-4"><button onClick={()=>onSave(f)} className="flex-1 bg-orange-500 p-3 rounded-xl font-bold">Guardar</button><button onClick={onClose} className="flex-1 bg-slate-800 p-3 rounded-xl text-slate-400">Cancelar</button></div></div>
+      <p className="text-sm text-slate-400">Radio: {f.radius}m</p><input type="range" min="10" max="1000" value={f.radius} onChange={e=>setF({...f,radius:parseInt(e.target.value)})} className="w-full accent-green-600" />
+      <div className="flex gap-2 mt-4"><button onClick={()=>onSave(f)} className="flex-1 bg-green-600 p-3 rounded-xl font-bold">Guardar</button><button onClick={onClose} className="flex-1 bg-slate-800 p-3 rounded-xl text-slate-400">Cancelar</button></div></div>
     </div>
   );
 };
@@ -356,7 +356,7 @@ const WorksiteManagementView = ({ worksites, onAdd, onUpdate, onDelete, onBack }
   const [show, setShow] = useState(false); const [edit, setEdit] = useState<any>();
   return (
     <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-24"><div className="flex gap-4 items-center mb-6"><button onClick={onBack}><ArrowLeft/></button><h2 className="text-2xl font-bold flex-1">Sedes</h2> <button onClick={()=>{setEdit(null);setShow(true);}} className="bg-[#ff8c00] p-2 rounded-xl"><Plus/></button></div>
-    {worksites.map((w:any) => (<div key={w.id} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center"><div><p className="font-bold text-lg">{w.name}</p><p className="text-orange-500 text-xs">Radio: {w.radius}m</p></div><div className="flex gap-2"><button onClick={()=>{setEdit(w);setShow(true);}} className="p-2"><Edit3 className="w-5 text-slate-500"/></button><button onClick={()=>onDelete(w.id)} className="p-2"><Trash className="w-5 text-red-500"/></button></div></div>))}
+    {worksites.map((w:any) => (<div key={w.id} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center"><div><p className="font-bold text-lg">{w.name}</p><p className="text-green-600 text-xs">Radio: {w.radius}m</p></div><div className="flex gap-2"><button onClick={()=>{setEdit(w);setShow(true);}} className="p-2"><Edit3 className="w-5 text-slate-500"/></button><button onClick={()=>onDelete(w.id)} className="p-2"><Trash className="w-5 text-red-500"/></button></div></div>))}
     {show && <WorksiteModal worksite={edit} onClose={()=>setShow(false)} onSave={edit?(d:any)=>onUpdate(edit.id,d):onAdd} />}</div>
   );
 };
@@ -371,7 +371,7 @@ const PendingRequestsView = ({ onBack, onActionComplete, requests, onSelectRecor
           <div><p className="font-bold text-lg">{r.user_name}</p><p className="text-xs text-slate-400">{new Date(r.timestamp).toLocaleString()}</p></div>
           <div className="flex flex-col items-end gap-1">
             {r.distance > 100 && <span className="bg-red-500/10 text-red-500 text-[10px] font-black px-2 py-1 rounded">FUERA RANGO</span>}
-            {r.estado_extra === 'PENDIENTE' && <span className="bg-orange-500/10 text-orange-500 text-[10px] font-black px-2 py-1 rounded">+{r.minutos_extra} MIN</span>}
+            {r.estado_extra === 'PENDIENTE' && <span className="bg-green-600/10 text-green-600 text-[10px] font-black px-2 py-1 rounded">+{r.minutos_extra} MIN</span>}
           </div>
         </div>
         {r.estado_extra === 'PENDIENTE' && <p className="text-xs text-slate-400 italic bg-slate-800/50 p-3 rounded-xl border border-slate-800">El empleado excedió su horario teórico en {r.minutos_extra} minutos.</p>}
@@ -412,18 +412,18 @@ const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: { reco
           <button onClick={onBack} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><ArrowLeft className="w-6 h-6" /></button>
           <h2 className="text-2xl font-bold">Registros de Empleados</h2>
         </div>
-        <button disabled={filteredRecords.length === 0} onClick={handleGeneratePDF} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20">
+        <button disabled={filteredRecords.length === 0} onClick={handleGeneratePDF} className="flex items-center gap-2 bg-green-600 hover:bg-orange-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-green-600/20">
           <Download className="w-4 h-4" /> Exportar PDF
         </button>
       </header>
       
       <section className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Desde</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-orange-500/20" /></div>
-          <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Hasta</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-orange-500/20" /></div>
+          <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Desde</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-green-600/20" /></div>
+          <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Hasta</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-green-600/20" /></div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Empleado</label>
-            <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-orange-500/20">
+            <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white outline-none focus:ring-2 focus:ring-green-600/20">
               <option value="all">Todos los empleados</option>
               {users.map(u => ( <option key={u.id} value={u.id}>{u.name}</option> ))}
             </select>
@@ -436,15 +436,15 @@ const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: { reco
         <div className="space-y-3">
           {filteredRecords.length === 0 ? ( <div className="text-center py-12 bg-slate-900 rounded-3xl border border-slate-800"><p className="text-slate-500 font-bold italic">No hay registros para este filtro</p></div> ) : (
             filteredRecords.map(record => (
-              <div key={record.id} onClick={() => onSelectRecord(record)} className="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 hover:border-orange-500/20 transition-all cursor-pointer group">
+              <div key={record.id} onClick={() => onSelectRecord(record)} className="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 hover:border-green-600/20 transition-all cursor-pointer group">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${record.type === 'IN' ? 'bg-green-500/10' : 'bg-orange-500/10'}`}>{record.type === 'IN' ? <LogIn className="text-green-500 w-6 h-6" /> : <LogOut className="text-[#ff8c00] w-6 h-6" />}</div>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${record.type === 'IN' ? 'bg-green-500/10' : 'bg-green-600/10'}`}>{record.type === 'IN' ? <LogIn className="text-green-500 w-6 h-6" /> : <LogOut className="text-[#ff8c00] w-6 h-6" />}</div>
                   <div>
-                    <div className="flex items-center gap-2"><p className="font-bold text-sm text-white">{record.user_name || 'Empleado'}</p><span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${record.type === 'IN' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'}`}>{record.type === 'IN' ? 'Entrada' : 'Salida'}</span></div>
+                    <div className="flex items-center gap-2"><p className="font-bold text-sm text-white">{record.user_name || 'Empleado'}</p><span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${record.type === 'IN' ? 'bg-green-500/20 text-green-500' : 'bg-green-600/20 text-green-600'}`}>{record.type === 'IN' ? 'Entrada' : 'Salida'}</span></div>
                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">{new Date(record.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(record.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-orange-500 transition-colors" />
+                <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-green-600 transition-colors" />
               </div>
             ))
           )}
@@ -501,21 +501,21 @@ const ExportView = ({ onBack, records, showToast }: { onBack: () => void, record
         <div className="space-y-2">
           <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Rango de Fechas Global</label>
           <div className="grid grid-cols-2 gap-4">
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-orange-500/20" />
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-orange-500/20" />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-green-600/20" />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-green-600/20" />
           </div>
         </div>
         
         <div className="space-y-4">
           <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Formato de Archivo</label>
           <div className="grid grid-cols-3 gap-4">
-            <button type="button" onClick={() => setFormat('CSV')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'CSV' ? 'border-[#ff8c00] bg-orange-500/10' : 'border-slate-700 hover:border-orange-500/50'}`}><p className="font-bold">CSV</p><p className="text-[10px] text-slate-500">Excel / Sheets</p></button>
-            <button type="button" onClick={() => setFormat('PDF')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'PDF' ? 'border-[#ff8c00] bg-orange-500/10' : 'border-slate-700 hover:border-orange-500/50'}`}><p className="font-bold">PDF</p><p className="text-[10px] text-slate-500">Lectura</p></button>
-            <button type="button" onClick={() => setFormat('JSON')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'JSON' ? 'border-[#ff8c00] bg-orange-500/10' : 'border-slate-700 hover:border-orange-500/50'}`}><p className="font-bold">JSON</p><p className="text-[10px] text-slate-500">Datos</p></button>
+            <button type="button" onClick={() => setFormat('CSV')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'CSV' ? 'border-[#ff8c00] bg-green-600/10' : 'border-slate-700 hover:border-green-600/50'}`}><p className="font-bold">CSV</p><p className="text-[10px] text-slate-500">Excel / Sheets</p></button>
+            <button type="button" onClick={() => setFormat('PDF')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'PDF' ? 'border-[#ff8c00] bg-green-600/10' : 'border-slate-700 hover:border-green-600/50'}`}><p className="font-bold">PDF</p><p className="text-[10px] text-slate-500">Lectura</p></button>
+            <button type="button" onClick={() => setFormat('JSON')} className={`p-4 bg-slate-800 border rounded-2xl transition-all text-center ${format === 'JSON' ? 'border-[#ff8c00] bg-green-600/10' : 'border-slate-700 hover:border-green-600/50'}`}><p className="font-bold">JSON</p><p className="text-[10px] text-slate-500">Datos</p></button>
           </div>
         </div>
         
-        <button type="button" onClick={handleExport} className="w-full bg-[#ff8c00] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+        <button type="button" onClick={handleExport} className="w-full bg-[#ff8c00] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-green-600/20 hover:scale-[1.02] active:scale-95 transition-all">
           <Download className="w-6 h-6" /> Exportar Archivo ({filteredRecords.length} logs)
         </button>
       </div>
@@ -530,19 +530,19 @@ const AdminDashboard = ({ records, users, stats, onViewRequests, onNavigate }: {
     <div className="flex-1 p-6 space-y-6 font-['Quicksand'] overflow-y-auto pb-24">
       <section className="space-y-4">
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Resumen de la Empresa</h3>
-        <div onClick={() => onNavigate('admin-records')} className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-3xl shadow-xl shadow-orange-500/20 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
+        <div onClick={() => onNavigate('admin-records')} className="bg-gradient-to-br from-green-600 to-orange-600 p-6 rounded-3xl shadow-xl shadow-green-600/20 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Clock className="w-32 h-32" /></div>
           <div className="relative z-10"><div className="flex items-center justify-between mb-8"><div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md"><Clock className="w-6 h-6 text-white" /></div><span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold text-white backdrop-blur-md uppercase tracking-wider">En Vivo</span></div><p className="text-5xl font-black text-white mb-1">{stats.activeEmployees}</p><p className="text-white/80 font-bold text-sm">Empleados Registrados</p></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div onClick={() => onNavigate('admin-records')} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-orange-500/30 transition-all">
+          <div onClick={() => onNavigate('admin-records')} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-green-600/30 transition-all">
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><BarChart3 className="w-16 h-16" /></div>
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4"><BarChart3 className="w-5 h-5 text-[#ff8c00]" /></div>
+            <div className="w-10 h-10 rounded-xl bg-green-600/10 flex items-center justify-center mb-4"><BarChart3 className="w-5 h-5 text-[#ff8c00]" /></div>
             <div className="flex items-center justify-between mb-1"><p className="text-3xl font-black text-white">{stats.totalHoursToday}</p><span className="text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">+12%</span></div><p className="text-slate-500 font-bold text-xs">Total de Horas Hoy</p>
           </div>
-          <div onClick={onViewRequests} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-orange-500/30 transition-all">
+          <div onClick={onViewRequests} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-green-600/30 transition-all">
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><AlertTriangle className="w-16 h-16" /></div>
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4"><AlertTriangle className="w-5 h-5 text-[#ff8c00]" /></div>
+            <div className="w-10 h-10 rounded-xl bg-green-600/10 flex items-center justify-center mb-4"><AlertTriangle className="w-5 h-5 text-[#ff8c00]" /></div>
             <div className="flex items-center justify-between mb-1"><p className="text-3xl font-black text-white">{stats.pendingAlerts}</p><span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">Requerida</span></div><p className="text-slate-500 font-bold text-xs">Alertas Pendientes</p>
           </div>
         </div>
@@ -560,7 +560,7 @@ const AdminDashboard = ({ records, users, stats, onViewRequests, onNavigate }: {
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Acceso Rápido</h3>
         <div className="space-y-3">
           {[ { icon: Users, label: 'Gestión de Usuarios', sub: 'Gestionar perfiles, permisos y roles', action: 'admin-users' }, { icon: Building2, label: 'Sedes y Ubicaciones', sub: 'Gestionar rangos GPS', action: 'admin-worksites' }, { icon: Download, label: 'Centro de Exportación', sub: 'Descargar CSV o PDF', action: 'admin-export' } ].map(item => (
-            <button key={item.label} type="button" onClick={() => onNavigate(item.action)} className="w-full flex items-center justify-between p-5 bg-slate-900 rounded-3xl border border-slate-800 hover:border-orange-500/20 transition-all group"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center group-hover:bg-orange-500/10 transition-colors"><item.icon className="w-6 h-6 text-slate-400 group-hover:text-[#ff8c00]" /></div><div className="text-left"><p className="font-bold text-sm">{item.label}</p><p className="text-xs text-slate-500">{item.sub}</p></div></div><ChevronRight className="w-5 h-5 text-slate-600 group-hover:translate-x-1 transition-all" /></button>
+            <button key={item.label} type="button" onClick={() => onNavigate(item.action)} className="w-full flex items-center justify-between p-5 bg-slate-900 rounded-3xl border border-slate-800 hover:border-green-600/20 transition-all group"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center group-hover:bg-green-600/10 transition-colors"><item.icon className="w-6 h-6 text-slate-400 group-hover:text-[#ff8c00]" /></div><div className="text-left"><p className="font-bold text-sm">{item.label}</p><p className="text-xs text-slate-500">{item.sub}</p></div></div><ChevronRight className="w-5 h-5 text-slate-600 group-hover:translate-x-1 transition-all" /></button>
           ))}
         </div>
       </section>
@@ -623,11 +623,13 @@ export default function App() {
   if (!user) return <Login onLogin={setUser} />;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-['Quicksand'] relative">
-      <header className="flex justify-between items-center p-4 border-b border-orange-500/10 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="flex items-center gap-2"><Clock className="text-[#ff8c00]" /><h2 className="font-bold text-lg">GeoClock</h2></div>
-        <button onClick={() => setUser(null)} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><LogOut /></button>
-      </header>
+    <header className="flex justify-between items-center p-4 border-b border-green-600/20 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
+  <div className="flex items-center gap-3">
+    <img src="/logo-vjl.png" alt="VJL Logo" className="w-8 h-8 object-contain" />
+    <h2 className="font-bold text-lg">VJL Consultores</h2>
+  </div>
+  <button onClick={() => setUser(null)} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><LogOut /></button>
+</header>
       <main className="flex-1 flex flex-col overflow-y-auto">
         <AnimatePresence mode="wait">
           {selectedRecord ? (
@@ -643,14 +645,14 @@ export default function App() {
                    {activeTab === 'admin-export' && <ExportView records={allRecords} showToast={(m:string,t:any)=>setToast({message:m,type:t})} onBack={() => setActiveTab('admin-dashboard')} />}
                    {activeTab === 'admin-requests' && <PendingRequestsView requests={pendingReqs} onSelectRecord={setSelectedRecord} onBack={() => setActiveTab('admin-dashboard')} onActionComplete={async(id:any,status:any)=>{await fetch('/api/admin/records/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});fetchAdminData();}} />}
                    {activeTab === 'admin-clockin' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
-                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
+                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-green-600 font-bold">{user.department}</p></div>}
                  </>
                ) : (
                  <>
                    {activeTab === 'home' && (isClockedIn ? <ActiveSession user={user} startTime={startTime!} onFinish={handleClockOut} onDiscard={() => { setIsClockedIn(false); setStartTime(null); }} /> : <Dashboard user={user} records={userRecords} onClockIn={handleClockIn} />)}
                    {activeTab === 'history' && <HistoryView records={userRecords} user={user} onSelectRecord={setSelectedRecord} />}
                    {activeTab === 'summary' && <WeeklySummaryView records={userRecords} user={user} showToast={(m,t)=>setToast({message:m,type:t})} />}
-                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-orange-500 font-bold">{user.department}</p></div>}
+                   {activeTab === 'profile' && <div className="p-8 text-center space-y-4"><UserIcon className="w-20 h-20 mx-auto text-slate-700"/><h2 className="text-2xl font-bold">{user.name}</h2><p className="text-green-600 font-bold">{user.department}</p></div>}
                  </>
                )}
              </motion.div>

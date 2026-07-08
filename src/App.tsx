@@ -623,13 +623,15 @@ export default function App() {
   if (!user) return <Login onLogin={setUser} />;
 
   return (
-    <header className="flex justify-between items-center p-4 border-b border-green-600/20 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
-  <div className="flex items-center gap-3">
-    <img src="/logo-vjl.png" alt="VJL Logo" className="w-8 h-8 object-contain" />
-    <h2 className="font-bold text-lg">VJL Consultores</h2>
-  </div>
-  <button onClick={() => setUser(null)} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><LogOut /></button>
-</header>
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-['Lato'] relative">
+      <header className="flex justify-between items-center p-4 border-b border-green-600/20 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <img src="/logo-vjl.png" alt="VJL Logo" className="w-8 h-8 object-contain" />
+          <h2 className="font-bold text-lg">VJL Consultores</h2>
+        </div>
+        <button onClick={() => setUser(null)} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><LogOut /></button>
+      </header>
+      
       <main className="flex-1 flex flex-col overflow-y-auto">
         <AnimatePresence mode="wait">
           {selectedRecord ? (

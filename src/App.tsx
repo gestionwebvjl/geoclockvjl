@@ -94,7 +94,7 @@ const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
             {error && <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-red-500 text-sm flex items-center gap-2"><X className="w-4 h-4" />{error}</div>}
             <div className="space-y-2"><label className="text-sm font-bold text-slate-400 ml-1">Email</label><div className="relative"><Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-[#ff8c00]" /></div></div>
             <div className="space-y-2"><label className="text-sm font-bold text-slate-400 ml-1">Contraseña</label><div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-12 text-white outline-none focus:border-[#ff8c00]" /></div></div>
-            <button type="submit" className="w-full bg-gradient-to-r from-[#ff8c00] to-orange-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2"><span>Entrar</span><ChevronRight className="w-5 h-5" /></button>
+            <button type="submit" className="w-full bg-gradient-to-r from-[#ff8c00] to-green-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2"><span>Entrar</span><ChevronRight className="w-5 h-5" /></button>
           </form>
         </div>
         <div className="text-center"><button onClick={() => { setMode(mode === 'USER' ? 'ADMIN' : 'USER'); setEmail(''); setPassword(''); }} className="text-sm font-bold text-slate-400 hover:text-white transition-colors">{mode === 'USER' ? '¿Eres administrador? Acceder al Panel' : 'Volver al Inicio de Sesión'}</button></div>
@@ -188,7 +188,7 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
       </section>
 
       <section className="flex justify-center pb-4">
-        <button disabled={!canClockIn} onClick={() => onClockIn(selectedWorksite)} className={`w-full max-w-xs aspect-square rounded-full shadow-xl flex flex-col items-center justify-center text-white transition-all active:scale-95 group ${canClockIn ? 'bg-[#ff8c00] hover:bg-orange-600 shadow-green-600/20 cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'}`}>
+        <button disabled={!canClockIn} onClick={() => onClockIn(selectedWorksite)} className={`w-full max-w-xs aspect-square rounded-full shadow-xl flex flex-col items-center justify-center text-white transition-all active:scale-95 group ${canClockIn ? 'bg-[#ff8c00] hover:bg-green-700 shadow-green-600/20 cursor-pointer' : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'}`}>
           <Fingerprint className={`w-16 h-16 mb-2 transition-transform ${canClockIn ? 'group-hover:scale-110' : ''}`} />
           <span className="text-xl font-bold uppercase tracking-wider">Fichar Entrada</span>
         </button>
@@ -412,7 +412,7 @@ const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: { reco
           <button onClick={onBack} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><ArrowLeft className="w-6 h-6" /></button>
           <h2 className="text-2xl font-bold">Registros de Empleados</h2>
         </div>
-        <button disabled={filteredRecords.length === 0} onClick={handleGeneratePDF} className="flex items-center gap-2 bg-green-600 hover:bg-orange-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-green-600/20">
+        <button disabled={filteredRecords.length === 0} onClick={handleGeneratePDF} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-green-600/20">
           <Download className="w-4 h-4" /> Exportar PDF
         </button>
       </header>
@@ -530,7 +530,7 @@ const AdminDashboard = ({ records, users, stats, onViewRequests, onNavigate }: {
     <div className="flex-1 p-6 space-y-6 font-['Quicksand'] overflow-y-auto pb-24">
       <section className="space-y-4">
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Resumen de la Empresa</h3>
-        <div onClick={() => onNavigate('admin-records')} className="bg-gradient-to-br from-green-600 to-orange-600 p-6 rounded-3xl shadow-xl shadow-green-600/20 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
+        <div onClick={() => onNavigate('admin-records')} className="bg-gradient-to-br from-green-600 to-green-700 p-6 rounded-3xl shadow-xl shadow-green-600/20 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-all">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Clock className="w-32 h-32" /></div>
           <div className="relative z-10"><div className="flex items-center justify-between mb-8"><div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md"><Clock className="w-6 h-6 text-white" /></div><span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold text-white backdrop-blur-md uppercase tracking-wider">En Vivo</span></div><p className="text-5xl font-black text-white mb-1">{stats.activeEmployees}</p><p className="text-white/80 font-bold text-sm">Empleados Registrados</p></div>
         </div>

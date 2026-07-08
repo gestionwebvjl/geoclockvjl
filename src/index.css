@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Quicksand", ui-sans-serif, system-ui, sans-serif;
-  --color-primary: #ff8c00;
+  --font-display: "Lato", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #669933; /* El nuevo verde principal de VJL */
 }
 
 body {

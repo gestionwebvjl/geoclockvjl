@@ -51,28 +51,6 @@ export function useGeolocation() {
   };
 }
 
-//export function useGeolocation() {
-  const [location, setLocation] = useState<{latitude: number, longitude: number} | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setError('La geolocalización no está soportada por su navegador');
-      return;
-    }
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-        setError(null);
-      },
-      (err) => { setError(err.message); },
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
-
-  return { location, error };
-}//
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371e3;
   const φ1 = lat1 * Math.PI/180;

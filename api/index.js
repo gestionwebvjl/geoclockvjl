@@ -219,14 +219,21 @@ app.get("/api/admin/pending-records", async (req, res) => {
 app.post("/api/admin/records/approve", async (req, res) => {
   try {
     const { id, status } = req.body;
+    let result;
+    
     if (status === 'REJECTED') {
-      await supabase.from('fichajes').update({ estado_extra: 'RECHAZADO', minutos_extra: 0 }).eq('id', id);
+      result = await supabase.from('fichajes').update({ estado_extra: 'RECHAZADO', minutos_extra: 0 }).eq('id', id);
     } else {
-      await supabase.from('fichajes').update({ distancia_metros: 0, estado_extra: 'APROBADO', notes: 'Aprobado por el Administrador' }).eq('id', id);
+      // Corregido: notes -> notas
+      result = await supabase.from('fichajes').update({ distancia_metros: 0, estado_extra: 'APROBADO', notas: 'Aprobado por el Administrador' }).eq('id', id);
     }
+
+    // El escudo de seguridad: si Supabase se queja, lanzamos el error
+    if (result.error) throw result.error;
+
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 

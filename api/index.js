@@ -116,7 +116,7 @@ app.get("/api/records/:id", async (req, res) => {
   if (error || !data) return res.json([]);
   
   const formateado = data.map(r => ({
-    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, worksite_name: r.sedes?.nombre || 'Sede desconocida',
+    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notas, timestamp: r.fecha_hora, worksite_name: r.sedes?.nombre || 'Sede desconocida',
     minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
   }));
   res.json(formateado);
@@ -127,7 +127,7 @@ app.get("/api/admin/records", async (req, res) => {
   if (error || !data) return res.json([]);
   
   const formateado = data.map(r => ({
-    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notes, timestamp: r.fecha_hora, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida',
+    id: r.id, user_id: r.empleado_id, worksite_id: r.sede_id, type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', latitude: r.latitud, longitude: r.longitud, distance: r.distancia_metros, notes: r.notas, timestamp: r.fecha_hora, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida',
     minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
   }));
   res.json(formateado);
@@ -206,7 +206,7 @@ app.get("/api/admin/pending-records", async (req, res) => {
     if (error || !data) return res.json([]);
     
     const formateado = data.map(r => ({
-      id: r.id, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', timestamp: r.fecha_hora, notes: r.notes || 'Revisión requerida', is_manual: false,
+      id: r.id, user_name: r.users?.name || 'Usuario desconocido', worksite_name: r.sedes?.nombre || 'Sede desconocida', type: r.tipo === 'Entrada Jornada' ? 'IN' : 'OUT', timestamp: r.fecha_hora, notes: r.notas || 'Revisión requerida', is_manual: false,
       distance: r.distancia_metros, 
       minutos_extra: r.minutos_extra, estado_extra: r.estado_extra
     }));

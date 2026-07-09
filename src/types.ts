@@ -41,6 +41,17 @@ export interface Record {
 import { useState, useEffect } from 'react';
 
 export function useGeolocation() {
+  // MODO PRUEBAS DE ESCRITORIO: Bypass total del GPS
+  return { 
+    location: { 
+      latitude: 39.4835,  // <-- PON AQUÍ LA LATITUD DE L'ESTACIÓ
+      longitude: -0.4429  // <-- PON AQUÍ LA LONGITUD DE L'ESTACIÓ
+    }, 
+    error: null 
+  };
+}
+
+//export function useGeolocation() {
   const [location, setLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,8 +72,7 @@ export function useGeolocation() {
   }, []);
 
   return { location, error };
-}
-
+}//
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371e3;
   const φ1 = lat1 * Math.PI/180;

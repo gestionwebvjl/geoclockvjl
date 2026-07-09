@@ -143,7 +143,7 @@ app.post("/api/clock", async (req, res) => {
       latitud: req.body.latitude, 
       longitud: req.body.longitude, 
       distancia_metros: req.body.distance, 
-      notes: req.body.notes || '', 
+      notas: req.body.notes || '', 
       fecha_hora: new Date().toISOString(),
       minutos_extra: req.body.minutos_extra || 0,
       estado_extra: req.body.estado_extra || 'N/A'

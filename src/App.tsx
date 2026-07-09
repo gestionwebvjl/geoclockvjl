@@ -438,9 +438,9 @@ const AdminRecordsListView = ({ records, users, onSelectRecord, onBack }: { reco
             filteredRecords.map(record => (
               <div key={record.id} onClick={() => onSelectRecord(record)} className="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 hover:border-green-600/20 transition-all cursor-pointer group">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${record.type === 'IN' ? 'bg-green-500/10' : 'bg-green-600/10'}`}>{record.type === 'IN' ? <LogIn className="text-green-500 w-6 h-6" /> : <LogOut className="text-[#669933] w-6 h-6" />}</div>
-                  <div>
-                    <div className="flex items-center gap-2"><p className="font-bold text-sm text-white">{record.user_name || 'Empleado'}</p><span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${record.type === 'IN' ? 'bg-green-500/20 text-green-500' : 'bg-green-600/20 text-green-600'}`}>{record.type === 'IN' ? 'Entrada' : 'Salida'}</span></div>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${record.type === 'IN' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>{record.type === 'IN' ? <LogIn className="text-green-500 w-6 h-6" /> : <LogOut className="text-red-500 w-6 h-6" />}</div>
+                <div>
+                  <div className="flex items-center gap-2"><p className="font-bold text-sm text-white">{record.user_name || 'Empleado'}</p><span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${record.type === 'IN' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>{record.type === 'IN' ? 'Entrada' : 'Salida'}</span></div>
                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">{new Date(record.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(record.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                 </div>

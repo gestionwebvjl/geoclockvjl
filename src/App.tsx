@@ -105,7 +105,7 @@ const Login = ({ onLogin }: { onLogin: (user: User) => void }) => {
 
 const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (worksiteId: number) => void, records: Record[] }) => {
   const [worksites, setWorksites] = useState<Worksite[]>([]);
-  const [selectedWorksite, setSelectedWorksite] = useState<number>(0);
+  const [selectedWorksite, setSelectedWorksite] = useState<any>('');
   const { location, error: geoError } = useGeolocation();
   const [distance, setDistance] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -174,7 +174,7 @@ const Dashboard = ({ user, onClockIn, records }: { user: User, onClockIn: (works
         <div className="space-y-2">
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Seleccionar Sede</label>
           <div className="relative">
-            <select value={selectedWorksite} onChange={(e) => setSelectedWorksite(Number(e.target.value))} className="w-full bg-slate-900 border border-green-600/20 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-green-600/50 transition-all font-medium">
+            <select value={selectedWorksite} onChange={(e) => setSelectedWorksite(e.target.value)} className="w-full bg-slate-900 border border-green-600/20 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-green-600/50 transition-all font-medium">
               {worksites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#669933]"><ChevronRight className="rotate-90" /></div>

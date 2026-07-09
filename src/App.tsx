@@ -629,7 +629,7 @@ export default function App() {
           <img src="/logo-vjl.png" alt="VJL Logo" className="w-8 h-8 object-contain" />
           <h2 className="font-bold text-lg">VJL Consultores</h2>
         </div>
-        <button onClick={() => setUser(null)} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><LogOut /></button>
+        <button onClick={() => { setUser(null); setActiveTab('home'); }} className="p-2 text-slate-500 hover:text-red-500 transition-colors"><LogOut /></button>
       </header>
       
       <main className="flex-1 flex flex-col overflow-y-auto">

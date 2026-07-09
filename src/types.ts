@@ -44,7 +44,7 @@ export function useGeolocation() {
   // MODO PRUEBAS DE ESCRITORIO: Bypass total del GPS
   return { 
     location: { 
-      latitude: 39.48216597109474  // <-- PON AQUÍ LA LATITUD DE L'ESTACIÓ
+      latitude: 39.48216597109474,  // <-- PON AQUÍ LA LATITUD DE L'ESTACIÓ
       longitude: -0.44283025379807534  // <-- PON AQUÍ LA LONGITUD DE L'ESTACIÓ
     }, 
     error: null 

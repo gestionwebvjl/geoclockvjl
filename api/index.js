@@ -236,7 +236,13 @@ app.get("/api/admin/stats", async (req, res) => {
     });
     
     const horasHoy = (totalMs / 3600000).toFixed(1);
-    const alertas = (fichajesHoy || []).filter(f => f.distancia_metros > 100 || f.estado_extra === 'PENDIENTE').length;
+    
+    // NUEVO: Buscamos todas las alertas pendientes en toda la historia, no solo hoy.
+    const { data: todasAlertas, error: errAlertas } = await supabase.from('fichajes')
+      .select('id')
+      .or('distancia_metros.gt.100,estado_extra.eq.PENDIENTE');
+      
+    const alertas = todasAlertas ? todasAlertas.length : 0;
 
     res.json({ activeEmployees: users?.length || 0, totalHoursToday: horasHoy, pendingAlerts: alertas });
   } catch (err) {

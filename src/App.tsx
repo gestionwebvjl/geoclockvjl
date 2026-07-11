@@ -543,7 +543,15 @@ const AdminDashboard = ({ records, users, stats, onViewRequests, onNavigate }: {
           <div onClick={onViewRequests} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-green-600/30 transition-all">
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><AlertTriangle className="w-16 h-16" /></div>
             <div className="w-10 h-10 rounded-xl bg-green-600/10 flex items-center justify-center mb-4"><AlertTriangle className="w-5 h-5 text-[#669933]" /></div>
-            <div className="flex items-center justify-between mb-1"><p className="text-3xl font-black text-white">{stats.pendingAlerts}</p><span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">Requerida</span></div><p className="text-slate-500 font-bold text-xs">Alertas Pendientes</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-3xl font-black text-white">{stats.pendingAlerts}</p>
+              {stats.pendingAlerts > 0 ? (
+                <span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full animate-pulse">Requerida</span>
+              ) : (
+                <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">Al día</span>
+              )}
+            </div>
+            <p className="text-slate-500 font-bold text-xs">Alertas Pendientes</p>
           </div>
         </div>
         {stats.pendingAlerts > 0 && (

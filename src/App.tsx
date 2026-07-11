@@ -335,7 +335,7 @@ const UserManagementView = ({ users, onAdd, onUpdate, onDelete, onBack }: any) =
   return (
     <div className="flex-1 p-6 space-y-4 overflow-y-auto pb-24"><div className="flex gap-4 items-center mb-6"><button onClick={onBack}><ArrowLeft/></button><h2 className="text-2xl font-bold flex-1">Usuarios</h2> <button onClick={()=>{setEdit(null);setShow(true);}} className="bg-[#669933] p-2 rounded-xl"><Plus/></button></div>
     {users.map((u:any) => (<div key={u.id} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center"><div><p className="font-bold">{u.name}</p><p className="text-xs text-slate-500">{u.role}</p></div><div className="flex gap-2"><button onClick={()=>{setEdit(u);setShow(true);}} className="p-2"><Edit3 className="w-5 text-slate-500"/></button><button onClick={()=>onDelete(u.id)} className="p-2"><Trash className="w-5 text-red-500"/></button></div></div>))}
-    {show && <UserModal user={edit} onClose={()=>setShow(false)} onSave={edit?(d:any)=>onUpdate(edit.id,d):onAdd} />}</div>
+    {show && <UserModal user={edit} onClose={()=>setShow(false)} onSave={async (d:any) => { if(edit) { await onUpdate(edit.id, d); } else { await onAdd(d); } setShow(false); }} />}</div>
   );
 };
 
